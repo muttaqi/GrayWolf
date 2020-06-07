@@ -1,0 +1,144 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 12.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[      5226,        136]
+NotebookOptionsPosition[      4710,        119]
+NotebookOutlinePosition[      5051,        134]
+CellTagsIndexPosition[      5008,        131]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", 
+   RowBox[{
+    RowBox[{"SetDirectory", "[", 
+     RowBox[{"NotebookDirectory", "[", "]"}], "]"}], ";", 
+    "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"<<", "Model"}], ".", "m"}], ";", "\[IndentingNewLine]", 
+    "\[IndentingNewLine]", 
+    RowBox[{"MyDB", " ", "=", " ", 
+     RowBox[{"Model", "[", 
+      RowBox[{"Dataset", "[", 
+       RowBox[{"<|", "|>"}], "]"}], "]"}]}], ";", "\[IndentingNewLine]", 
+    RowBox[{"MyDB", " ", "=", " ", 
+     RowBox[{"MyDB", "[", 
+      RowBox[{"\"\<CreateDocument\>\"", "[", "\"\<Doc1\>\"", "]"}], "]"}]}], 
+    ";", "\[IndentingNewLine]", 
+    RowBox[{"MyDB", " ", "=", " ", 
+     RowBox[{"MyDB", "[", 
+      RowBox[{"\"\<Add\>\"", "[", 
+       RowBox[{"\"\<Doc1\>\"", ",", 
+        RowBox[{"<|", 
+         RowBox[{
+          RowBox[{"1", "\[Rule]", "\"\<A\>\""}], ",", 
+          RowBox[{"2", "\[Rule]", "\"\<B\>\""}], ",", 
+          RowBox[{"3", "\[Rule]", "\"\<C\>\""}]}], "|>"}]}], "]"}], "]"}]}], 
+    ";", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"MyDB", "[", 
+      RowBox[{"\"\<Get\>\"", "[", "\"\<Doc1\>\"", "]"}], "]"}], "[", 
+     RowBox[{"\"\<Print\>\"", "[", "]"}], "]"}]}], "*)"}], 
+  "\[IndentingNewLine]", "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"MyDB", "=", 
+     RowBox[{"<|", "\[IndentingNewLine]", 
+      RowBox[{"\"\<Doc1\>\"", "\[Rule]", "\[IndentingNewLine]", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"1", "\[Rule]", "\"\<A\>\""}], ",", 
+         RowBox[{"2", "\[Rule]", "\"\<B\>\""}], ",", 
+         RowBox[{"3", "\[Rule]", "\"\<C\>\""}]}], "|>"}]}], 
+      "\[IndentingNewLine]", "|>"}]}], ";"}], "\[IndentingNewLine]", 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{
+      RowBox[{"MyDB", "[", "\"\<Doc1\>\"", "]"}], "[", "4", "]"}], "=", 
+     "\"\<D\>\""}], ";"}], "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{"CloudPut", "[", "MyDB", "]"}]}]}]], "Input",
+ CellChangeTimes->{{3.8002153056936455`*^9, 3.8002153201928296`*^9}, {
+   3.800215509818093*^9, 3.8002155756604385`*^9}, {3.800215632322072*^9, 
+   3.8002156653064137`*^9}, {3.800215725739464*^9, 3.800215778723199*^9}, {
+   3.800215841779519*^9, 3.800215858155357*^9}, 3.8002160093603053`*^9, 
+   3.8002167229936714`*^9, 3.8002170935182104`*^9, {3.800217174428999*^9, 
+   3.800217189422324*^9}, {3.8002183075420012`*^9, 3.8002183913022175`*^9}, {
+   3.800218576115359*^9, 3.8002186219670615`*^9}, {3.800218652286542*^9, 
+   3.8002186888631663`*^9}, {3.800218783872181*^9, 3.800218827985363*^9}, {
+   3.8002189079366283`*^9, 3.8002189190565386`*^9}, {3.8002191356981144`*^9, 
+   3.8002191985422535`*^9}, {3.8002192649445267`*^9, 
+   3.8002192665788393`*^9}, {3.8002204950530033`*^9, 
+   3.8002205264917746`*^9}, {3.8002206758886256`*^9, 
+   3.8002206761726494`*^9}},ExpressionUUID->"435871ac-9d69-4238-8121-\
+32b9f6c36a15"],
+
+Cell[BoxData[
+ RowBox[{"\[LeftAssociation]", 
+  RowBox[{"\<\"Doc1\"\>", "\[Rule]", 
+   RowBox[{"\[LeftAssociation]", 
+    RowBox[{
+     RowBox[{"1", "\[Rule]", "\<\"A\"\>"}], ",", 
+     RowBox[{"2", "\[Rule]", "\<\"B\"\>"}], ",", 
+     RowBox[{"3", "\[Rule]", "\<\"C\"\>"}], ",", 
+     RowBox[{"4", "\[Rule]", "\<\"D\"\>"}]}], "\[RightAssociation]"}]}], 
+  "\[RightAssociation]"}]], "Output",
+ CellChangeTimes->{
+  3.800218830757202*^9, {3.8002191764174433`*^9, 3.8002192011614685`*^9}, 
+   3.800219270345459*^9, 3.8002205297663994`*^9},
+ CellLabel->"Out[57]=",ExpressionUUID->"bf3d1e8d-653d-4322-82b7-dc57326a890d"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"CloudObject", "[", 
+   TemplateBox[{
+    "\"https://www.wolframcloud.com/obj/dbd2fb2f-783d-4453-b13b-355bf32139c0\"\
+","https://www.wolframcloud.com/obj/dbd2fb2f-783d-4453-b13b-355bf32139c0"},
+    "HyperlinkURL"], "]"}],
+  CloudObject[
+  "https://www.wolframcloud.com/obj/dbd2fb2f-783d-4453-b13b-355bf32139c0"],
+  SelectWithContents->True]], "Output",
+ CellChangeTimes->{
+  3.800218830757202*^9, {3.8002191764174433`*^9, 3.8002192011614685`*^9}, 
+   3.800219270345459*^9, 3.8002205305080566`*^9},
+ CellLabel->"Out[58]=",ExpressionUUID->"40ad837b-318b-4e62-9e8e-810e8383f3fd"]
+}, Open  ]]
+},
+WindowSize->{958, 988},
+WindowMargins->{{Automatic, -7}, {Automatic, 0}},
+FrontEndVersion->"12.0 for Microsoft Windows (64-bit) (April 8, 2019)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[580, 22, 2872, 64, 314, "Input",ExpressionUUID->"435871ac-9d69-4238-8121-32b9f6c36a15"],
+Cell[3455, 88, 616, 13, 32, "Output",ExpressionUUID->"bf3d1e8d-653d-4322-82b7-dc57326a890d"],
+Cell[4074, 103, 620, 13, 35, "Output",ExpressionUUID->"40ad837b-318b-4e62-9e8e-810e8383f3fd"]
+}, Open  ]]
+}
+]
+*)
+

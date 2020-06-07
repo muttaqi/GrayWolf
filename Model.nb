@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[     65342,       1287]
-NotebookOptionsPosition[     64513,       1267]
-NotebookOutlinePosition[     64859,       1282]
-CellTagsIndexPosition[     64816,       1279]
+NotebookDataLength[     65651,       1294]
+NotebookOptionsPosition[     64827,       1274]
+NotebookOutlinePosition[     65168,       1289]
+CellTagsIndexPosition[     65125,       1286]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -21,6 +21,9 @@ Notebook[{
 
 Cell[CellGroupData[{
 Cell[BoxData[{
+ RowBox[{
+  RowBox[{"BeginPackage", "[", "\"\<Model\>\"", "]"}], 
+  "\[IndentingNewLine]"}], "\[IndentingNewLine]", 
  RowBox[{
   RowBox[{
    RowBox[{
@@ -188,6 +191,9 @@ Cell[BoxData[{
        RowBox[{"Key", "[", "doc", "]"}]}], "]"}], "]"}]}], ";"}], 
   "\[IndentingNewLine]"}], "\[IndentingNewLine]", 
  RowBox[{
+  RowBox[{"EndPackage", "[", "]"}], 
+  "\[IndentingNewLine]"}], "\[IndentingNewLine]", 
+ RowBox[{
   RowBox[{"(*", 
    RowBox[{
     RowBox[{
@@ -341,8 +347,9 @@ Cell[BoxData[{
    3.793213004033735*^9, 3.7932130863932333`*^9}, {3.793213273321274*^9, 
    3.793213464166914*^9}, {3.7932135028543143`*^9, 3.793213511350371*^9}, {
    3.793213730504366*^9, 3.7932137423410788`*^9}, {3.7932138034375386`*^9, 
-   3.793213822309456*^9}, {3.793213906981949*^9, 
-   3.7932140573788786`*^9}},ExpressionUUID->"f00a2e9b-261a-4bfe-a76a-\
+   3.793213822309456*^9}, {3.793213906981949*^9, 3.7932140573788786`*^9}, {
+   3.80021523994417*^9, 3.8002152668643713`*^9}, {3.800215492902708*^9, 
+   3.8002154938567867`*^9}},ExpressionUUID->"f00a2e9b-261a-4bfe-a76a-\
 095a5b5c4c4f"],
 
 Cell[BoxData[
@@ -564,7 +571,7 @@ $CellContext`h -> $CellContext`i],
            TypeSystem`NestedGrid`PackagePrivate`$bottomBar$$]]}], Spacings -> 
         If[TypeSystem`NestedGrid`PackagePrivate`$path$$ == {}, 
           0, {{}, {0, 0.05, 0}}]], StandardForm], 
-      ImageSizeCache -> {220., {60., 67.}}, 
+      ImageSizeCache -> {220., {61., 67.}}, 
       TrackedSymbols :> {
        TypeSystem`NestedGrid`PackagePrivate`$state$$, 
         TypeSystem`NestedGrid`PackagePrivate`$grid$$}], 
@@ -784,7 +791,7 @@ $CellContext`h -> $CellContext`i],
            TypeSystem`NestedGrid`PackagePrivate`$bottomBar$$]]}], Spacings -> 
         If[TypeSystem`NestedGrid`PackagePrivate`$path$$ == {}, 
           0, {{}, {0, 0.05, 0}}]], StandardForm], 
-      ImageSizeCache -> {220., {47., 54.}}, 
+      ImageSizeCache -> {220., {48., 54.}}, 
       TrackedSymbols :> {
        TypeSystem`NestedGrid`PackagePrivate`$state$$, 
         TypeSystem`NestedGrid`PackagePrivate`$grid$$}], 
@@ -1018,7 +1025,7 @@ Cell[BoxData[
            TypeSystem`NestedGrid`PackagePrivate`$bottomBar$$]]}], Spacings -> 
         If[TypeSystem`NestedGrid`PackagePrivate`$path$$ == {}, 
           0, {{}, {0, 0.05, 0}}]], StandardForm], 
-      ImageSizeCache -> {220., {34., 41.}}, 
+      ImageSizeCache -> {220., {35., 41.}}, 
       TrackedSymbols :> {
        TypeSystem`NestedGrid`PackagePrivate`$state$$, 
         TypeSystem`NestedGrid`PackagePrivate`$grid$$}], 
@@ -1236,7 +1243,7 @@ Cell[BoxData[
            TypeSystem`NestedGrid`PackagePrivate`$bottomBar$$]]}], Spacings -> 
         If[TypeSystem`NestedGrid`PackagePrivate`$path$$ == {}, 
           0, {{}, {0, 0.05, 0}}]], StandardForm], 
-      ImageSizeCache -> {220., {34., 41.}}, 
+      ImageSizeCache -> {220., {35., 41.}}, 
       TrackedSymbols :> {
        TypeSystem`NestedGrid`PackagePrivate`$state$$, 
         TypeSystem`NestedGrid`PackagePrivate`$grid$$}], 
@@ -1265,9 +1272,9 @@ Cell[BoxData[
 62f368486c7c"]
 }, Open  ]]
 },
-WindowSize->{958, 988},
-WindowMargins->{{Automatic, -7}, {Automatic, 0}},
-FrontEndVersion->"11.2 for Microsoft Windows (64-bit) (September 10, 2017)",
+WindowSize->{958, 461},
+WindowMargins->{{-7, Automatic}, {0, Automatic}},
+FrontEndVersion->"12.0 for Microsoft Windows (64-bit) (April 8, 2019)",
 StyleDefinitions->"Default.nb"
 ]
 (* End of Notebook Content *)
@@ -1282,12 +1289,12 @@ CellTagsIndex->{}
 (*NotebookFileOutline
 Notebook[{
 Cell[CellGroupData[{
-Cell[580, 22, 14118, 323, 751, "Input",ExpressionUUID->"f00a2e9b-261a-4bfe-a76a-095a5b5c4c4f"],
-Cell[14701, 347, 13169, 245, 146, "Output",ExpressionUUID->"f2ab027d-7ccb-4d35-97b0-c0e0f634d1e6"],
-Cell[27873, 594, 11941, 218, 120, "Output",ExpressionUUID->"4c1b453a-41a5-4f2d-8450-446671b8b8f2"],
-Cell[39817, 814, 902, 14, 32, "Output",ExpressionUUID->"c8db2463-5564-4a13-b6a0-034e823616b4"],
-Cell[40722, 830, 11887, 216, 94, "Output",ExpressionUUID->"f7aaf56b-ca8e-4f67-9698-71ffb937570a"],
-Cell[52612, 1048, 11885, 216, 94, "Output",ExpressionUUID->"c3cd2aa9-03d5-4516-9728-62f368486c7c"]
+Cell[580, 22, 14432, 330, 827, "Input",ExpressionUUID->"f00a2e9b-261a-4bfe-a76a-095a5b5c4c4f"],
+Cell[15015, 354, 13169, 245, 147, "Output",ExpressionUUID->"f2ab027d-7ccb-4d35-97b0-c0e0f634d1e6"],
+Cell[28187, 601, 11941, 218, 121, "Output",ExpressionUUID->"4c1b453a-41a5-4f2d-8450-446671b8b8f2"],
+Cell[40131, 821, 902, 14, 32, "Output",ExpressionUUID->"c8db2463-5564-4a13-b6a0-034e823616b4"],
+Cell[41036, 837, 11887, 216, 95, "Output",ExpressionUUID->"f7aaf56b-ca8e-4f67-9698-71ffb937570a"],
+Cell[52926, 1055, 11885, 216, 95, "Output",ExpressionUUID->"c3cd2aa9-03d5-4516-9728-62f368486c7c"]
 }, Open  ]]
 }
 ]
