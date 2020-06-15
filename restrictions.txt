@@ -1,0 +1,2 @@
+children must be the last member of a component's association list
+string based properties
