@@ -3,6 +3,11 @@
         "iosfwd": "cpp",
         "xiosbase": "cpp",
         "xlocale": "cpp",
-        "istream": "cpp"
+        "istream": "cpp",
+        "list": "cpp",
+        "xutility": "cpp",
+        "unordered_map": "cpp",
+        "xstring": "cpp",
+        "tuple": "cpp"
     }
 }

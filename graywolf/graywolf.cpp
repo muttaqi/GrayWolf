@@ -5,22 +5,42 @@
 #include <stack>
 #include <unordered_map>
 #include <list>
+#include <tuple>
 using namespace std;
 
 class Component {
 
     private:
+                        //boolean stores whether the value is a function or not
     unordered_map<string, string> props;
     list<Component> children;
+    string name;
+
+    public:
 
     void addProp(string name, string val) {
 
         props[name] = val;
     }
 
+    void setProps(unordered_map<string, string> map) {
+
+        props = map;
+    }
+
     void addChild(Component c) {
 
         children.push_back(c);
+    }
+
+    void setChildren(list<Component> list) {
+
+        children = list;
+    }
+
+    void setName(string s) {
+
+        name = s;
     }
 
     unordered_map<string, string> getProps() {
@@ -31,6 +51,11 @@ class Component {
     list<Component> getChildren() {
 
         return children;
+    }
+
+    string getName() {
+
+        return name;
     }
 };
 
@@ -88,7 +113,6 @@ int main (int argc, char *argv[]) {
 
                     isApp = true;
                     functions = functions.substr(0, l - 4);
-                    app += "App[";
                     brackets.push('[');
                     continue;
                 }
@@ -102,8 +126,12 @@ int main (int argc, char *argv[]) {
                     brackets.pop();
                     if (brackets.size() == 0) {
 
-                        app += in;
                         isApp = false;
+                    }
+
+                    else {
+                        
+                        app += in;
                     }
                     continue;
                 }
@@ -134,21 +162,134 @@ int main (int argc, char *argv[]) {
 
     src.close();
 
-    Component tree = buildComponent(app);
+    list<Component> tree = buildComponents(app);
     //adds to global view and controller strings
     buildViewAndController(tree);
 }
 
-Component buildComponent(string app) {
+list<Component> buildComponents(string in) {
 
-    Component c;
+    list<Component> l;
 
+    unordered_map<string, string> props;
+    list<Component> children;
+    string componentName = "";
 
+    string propertyName = "";
+    string propertyVal = "";
 
-    return c;
+    bool isPropertyName = false;
+    bool isPropertyVal = false;
+    bool isComponentName = false;
+    bool isComment = false;
+    stack<char> brackets;
+
+    for (string::size_type i = 0; i < in.size(); i ++) {
+
+        char c = in[i];
+
+        if (c == '{') {
+
+            if (isPropertyName) {
+
+                propertyName += c;
+            }
+
+            else if (isPropertyVal) {
+
+                propertyVal += c;
+            }
+
+            else {
+
+                isComponentName = true;
+            }
+        }
+
+        else if (c == '[') {
+
+            if (isComponentName) {
+
+                isPropertyName = true;
+                isPropertyVal = false;
+                isComponentName = false;
+            }
+
+            brackets.push('[');
+        }
+
+        else if (c == ']') {
+
+            if (brackets.size() == 1) {
+
+                Component newComponent;
+                
+                newComponent.setProps(props);
+                newComponent.setName(componentName);
+                newComponent.setChildren(children);
+
+                l.push_back(newComponent);
+
+                props.clear();
+                componentName = "";
+                children.clear();
+
+                isComponentName = true;
+                isPropertyName = false;
+                isPropertyVal = false;
+            }
+            brackets.pop();
+        }
+
+        else if (c == '-' && in.length() >= i + 2 && in[i + 1] == '>') {
+
+            i ++;
+            isPropertyVal = false;
+            isPropertyName = false;
+            isComponentName = false;
+
+            if (propertyName == "children") {
+
+                int closingBracket = in.find_last_of(']');
+                int len = closingBracket - i;
+                string newIn = in.substr(i, len);
+                
+                children = buildComponents(newIn);
+            }
+        }
+
+        else if (c == ',') {
+
+            if (brackets.size() == 1) {
+
+                isPropertyName = true;
+                isPropertyVal = false;
+                isComponentName = false;
+
+                props[propertyName] = propertyVal;
+            }
+        }
+
+        else if (isComponentName) {
+
+            componentName += c;
+        }
+
+        else if (isPropertyName) {
+
+            propertyName += c;
+        }
+
+        else if (isPropertyVal) {
+
+            propertyVal += c;
+        }
+    }
+
+    return l;
 }
 
-void buildViewAndController(Component tree) {
+void buildViewAndController(list<Component> tree) {
 
 
 }

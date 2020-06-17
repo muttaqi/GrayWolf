@@ -1,2 +1,3 @@
 children must be the last member of a component's association list
-string based properties
+string based properties only
+no '(*', '*)', '[', ']', or '->' can be present in a string in the app tree
