@@ -9,6 +9,35 @@
 #include <string>
 using namespace std;
 
+class Function {
+
+    private:
+
+    string header, body;
+
+    public:
+
+    void setHeader(string h) {
+
+        header = h;
+    }
+
+    void setBody(string b) {
+
+        body = b;
+    }
+
+    string getHeader() {
+
+        return header;
+    }
+
+    string getBody() {
+
+        return body;
+    }
+};
+
 class Component {
 
     private:
@@ -59,8 +88,9 @@ class Component {
         return name;
     }
 };
-
-string controller, view, functions, apiLink;
+//                      these three are in the cloud, while apiLink is the link to the cloud API
+string controller, view, apiFunctions, apiVariables, api, apiLink;
+list<Function> functions;
 int anonIncrement = 0;
 
 /**
@@ -87,11 +117,10 @@ int main (int argc, char *argv[]) {
     stack<char> brackets;
     bool isComment = false, 
         isString = false, 
-        isFunctionHeader = false, 
         isFunctionBody = false, 
         isApp = false,
         isComponent = false;
-    string functionHeader;
+    string functionHeader = "";
 
     string currentProp, currentComponent, app;
     
@@ -101,20 +130,53 @@ int main (int argc, char *argv[]) {
 
         while(src.get(in)) {
 
+            //otherwise handle functions
+            if (!isComment && in == '(' && src.peek() == '*') {
+
+                src.get(in);
+                isComment = true;
+                continue;
+            }
+
+            if (isComment && in == '*' && src.peek() == ')') {
+
+                src.get(in);
+                isComment = false;
+                continue;
+            }
+
+            if (isComment) {
+
+                continue;
+            }
+
+            if (in == '\"') {
+                
+                acc += in;
+                isString = !isString;
+                continue;
+            }
+
+            if (isString) {
+
+                acc += in;
+                continue;
+            }
+
             //check if app started
             if (!isApp) {
 
-                functions += in;
-                int l = functions.length();
+                acc += in;
+                int l = acc.length();
 
                 if (
-                    (!isComment && !isString && l >= 5 && functions.substr(l - 4, 4) == "App[" && isspace(functions.at(l - 5))) ||
-                    (functions == "App[")
+                    (!isComment && !isString && l >= 5 && acc.substr(l - 4, 4) == "App[" && isspace(acc.at(l - 5))) ||
+                    (acc == "App[")
                 ) {
 
                     isApp = true;
-                    functions = functions.substr(0, l - 4);
                     brackets.push('[');
+                    acc = "";
                     continue;
                 }
             }
@@ -145,19 +207,59 @@ int main (int argc, char *argv[]) {
                 }
             }
 
-            //otherwise handle functions
-            if (!isComment && in == '(' && src.peek() == '*') {
+            if (in == ':' && src.peek() == '=') {
+                
+                if (acc.find_first_of('[') != string::npos && acc.find_first_of(']') != string::npos) {
 
-                isComment = true;
+                    src.get(in);
+
+                    functionHeader = acc;
+                    isFunctionBody = true;
+                    acc = "";
+                    continue;
+                }
+
+                acc += in;
+                continue;
             }
 
-            else if (in == '\"') {
+            if ((in == ';' || in == '\n') && brackets.size() == 0) {
 
-                isString = !isString;
+                if (isFunctionBody) {
+
+                    acc += in;
+                    Function newFunc;
+                    newFunc.setHeader(functionHeader);
+                    newFunc.setBody(acc);
+                    functions.push_back(newFunc);
+
+                    isFunctionBody = false;
+                }
+
+                else {
+
+                    acc += in;
+                    apiVariables += acc;
+                }
+                acc = "";
+                continue;
             }
 
-            functions += in;
-            continue;
+            if (isOpening(in)) {
+
+                acc += in;
+                brackets.push(in);
+                continue;
+            }
+
+            if (isClosing(in) && brackets.top() == in) {
+
+                acc += in;
+                brackets.pop();
+                continue;
+            }
+            
+            acc += in;
         }
     }
 
@@ -169,6 +271,9 @@ int main (int argc, char *argv[]) {
     //adds to global view and controller strings
     buildViewAndController(tree);
     controller += "});";
+
+    //adds to global apiFunctions and api strings (apiVariables is already set up at this point)
+    buildAPI();
 }
 
 list<Component> buildComponents(string in) {
@@ -319,7 +424,11 @@ void buildViewAndController(list<Component> tree) {
 
                     if (c.getProps()["id"] != "") {
 
-                        functions += "set" + c.getProps()["id"] + prop.first + " := " + prop.second + "\n";
+                        Function newFunc;
+                        newFunc.setHeader("set" + c.getProps()["id"] + prop.first);
+                        newFunc.setBody(prop.second + "\n");
+                        functions.push_back(newFunc);
+
                         controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"] + prop.first + ", function(res) {\n"
                         + "document.getElementById(\"" + c.getProps()["id"] + "\".textContent = res" + "\n"
                         + "});\n";
@@ -335,6 +444,10 @@ void buildViewAndController(list<Component> tree) {
 
         view += "</" + c.getName() + ">\n";
     }
+}
+
+void buildAPI() {
+
 }
 
 bool isOpening(char in) {
