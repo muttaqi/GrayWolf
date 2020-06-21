@@ -8,6 +8,7 @@
         "xutility": "cpp",
         "unordered_map": "cpp",
         "xstring": "cpp",
-        "tuple": "cpp"
+        "tuple": "cpp",
+        "utility": "cpp"
     }
 }

@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <list>
 #include <tuple>
+#include <string>
 using namespace std;
 
 class Component {
@@ -59,7 +60,8 @@ class Component {
     }
 };
 
-string controller, view;
+string controller, view, functions, apiLink;
+int anonIncrement = 0;
 
 /**
  * expected:
@@ -91,8 +93,7 @@ int main (int argc, char *argv[]) {
         isComponent = false;
     string functionHeader;
 
-    string currentProp, currentComponent,
-        functions, app;
+    string currentProp, currentComponent, app;
     
     ifstream src (argv[0]);
     
@@ -163,8 +164,11 @@ int main (int argc, char *argv[]) {
     src.close();
 
     list<Component> tree = buildComponents(app);
+
+    controller += "window.addEventListener(\'load\', async function() {\n";
     //adds to global view and controller strings
     buildViewAndController(tree);
+    controller += "});";
 }
 
 list<Component> buildComponents(string in) {
@@ -291,7 +295,49 @@ list<Component> buildComponents(string in) {
 
 void buildViewAndController(list<Component> tree) {
 
+    for (Component c : tree) {
 
+        view += "<" + c.getName() + "\n";
+
+        if (c.getProps()["id"] != "") {
+
+            view += "id = " + c.getProps()["id"] + "\n";
+        }
+        
+        for (pair<string, string> prop : c.getProps()) {
+            
+            if (prop.first != "id") {
+            
+                //check if just a string val
+                if (count(prop.second.begin(), prop.second.end(), '\"') == 2 && prop.second.find_first_of('\"') == 0 && prop.second.find_last_of('\"') == prop.second.length() - 1) {
+
+
+                    view += prop.first + "=" + prop.second + "\n";
+                }
+                
+                else {
+
+                    if (c.getProps()["id"] != "") {
+
+                        functions += "set" + c.getProps()["id"] + prop.first + " := " + prop.second + "\n";
+                        controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"] + prop.first + ", function(res) {\n"
+                        + "document.getElementById(\"" + c.getProps()["id"] + "\".textContent = res" + "\n"
+                        + "});\n";
+                        view += prop.first + "=" + "\"\"\n";
+                    }
+                }
+            }
+        }
+
+        view += ">\n";
+
+        for (Component c : c.getChildren()) {
+
+            buildViewAndController(c);
+        }
+
+        view += "</" + c.getName() + ">\n";
+    }
 }
 
 bool isOpening(char in) {
