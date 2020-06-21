@@ -9,6 +9,8 @@
 #include <string>
 using namespace std;
 
+const std::string WHITESPACE = " \n\r\t\f\v";
+
 class Function {
 
     private:
@@ -88,8 +90,8 @@ class Component {
         return name;
     }
 };
-//                      these three are in the cloud, while apiLink is the link to the cloud API
-string controller, view, apiFunctions, apiVariables, api, apiLink;
+//                      these four are in the cloud, while apiLink is the link to the cloud API
+string controller, view, apiFunctions, apiVariables, apiHandler, api, apiLink;
 list<Function> functions;
 int anonIncrement = 0;
 
@@ -272,8 +274,21 @@ int main (int argc, char *argv[]) {
     buildViewAndController(tree);
     controller += "});";
 
-    //adds to global apiFunctions and api strings (apiVariables is already set up at this point)
+    //adds to global apiFunctions, apiHandler and api strings (apiVariables is already set up at this point)
     buildAPI();
+
+    ofstream viewF, controllerF, apiF;
+    viewF.open("index.html");
+    controllerF.open("controller.js");
+    apiF.open("api.wls");
+
+    viewF << view;
+    controllerF << controller;
+    apiF << apiVariables + apiFunctions + apiHandler + api;
+
+    viewF.close();
+    controllerF.close();
+    apiF.close();
 }
 
 list<Component> buildComponents(string in) {
@@ -448,6 +463,35 @@ void buildViewAndController(list<Component> tree) {
 
 void buildAPI() {
 
+    apiHandler += "APIHandler[func_] := Which[\n";
+
+    api += "CloudDeploy[APIFunction[{\"funcName\"->\"String\"}, APIHandler[#funcName]&], \"api\", Permissions -> \"Public\"]";
+
+    for (Function f : functions) {
+
+        apiFunctions += f.getHeader() + " := " + f.getBody();
+        //                                              get rid of the [] at the end of the header
+        apiHandler += "func == \"" + trim(f.getHeader()).substr(0, f.getHeader().length() - 2) + "\", " + trim(f.getHeader()) + ",\n";
+    }
+
+    apiHandler += "];\n";
+}
+
+std::string ltrim(const std::string& s)
+{
+	size_t start = s.find_first_not_of(WHITESPACE);
+	return (start == std::string::npos) ? "" : s.substr(start);
+}
+
+std::string rtrim(const std::string& s)
+{
+	size_t end = s.find_last_not_of(WHITESPACE);
+	return (end == std::string::npos) ? "" : s.substr(0, end + 1);
+}
+
+std::string trim(const std::string& s)
+{
+	return rtrim(ltrim(s));
 }
 
 bool isOpening(char in) {
