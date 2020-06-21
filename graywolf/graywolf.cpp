@@ -331,10 +331,7 @@ void buildViewAndController(list<Component> tree) {
 
         view += ">\n";
 
-        for (Component c : c.getChildren()) {
-
-            buildViewAndController(c);
-        }
+        buildViewAndController(c.getChildren());
 
         view += "</" + c.getName() + ">\n";
     }
