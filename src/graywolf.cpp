@@ -1,4 +1,3 @@
-#include "wstp.h"
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
@@ -37,6 +36,12 @@ class Function {
     string getBody() {
 
         return body;
+    }
+
+    string toString() {
+
+        return "Function(header: " + header + "\n" +
+        "body: " + body + ")\n";
     }
 };
 
@@ -89,9 +94,113 @@ class Component {
 
         return name;
     }
+
+    string toString() {
+
+        string ret = "Component(name: " + name + "\n";
+
+        for (pair<string, string> prop : props) {
+
+            ret += prop.first + ": " + prop.second + "\n";
+        }
+
+        ret += "children: [\n";
+
+        for (Component c : children) {
+
+            ret += c.toString();
+        }
+
+        ret += "]\n";
+        ret += ")\n";
+
+        return ret;
+    }
 };
+
+static void printchar(unsigned char theChar) {
+
+    switch (theChar) {
+
+        case '\n':
+            printf("\\n");
+            break;
+        case '\r':
+            printf("\\r");
+            break;
+        case '\t':
+            printf("\\t");
+            break;
+        default:
+            if ((theChar < 0x20) || (theChar > 0x7f)) {
+                printf("\\%03o", (unsigned char)theChar);
+            } else {
+                printf("%c", theChar);
+            }
+        break;
+   }
+}
+
+std::string ltrim(const std::string& s)
+{
+	size_t start = s.find_first_not_of(WHITESPACE);
+	return (start == std::string::npos) ? "" : s.substr(start);
+}
+
+std::string rtrim(const std::string& s)
+{
+	size_t end = s.find_last_not_of(WHITESPACE);
+	return (end == std::string::npos) ? "" : s.substr(0, end + 1);
+}
+
+std::string trim(const std::string& s)
+{
+	return rtrim(ltrim(s));
+}
+
+bool isOpening(char in) {
+
+    return
+    in == '[' || 
+    in == '(';
+}
+
+bool isClosing(char in) {
+
+    return
+    in == ']' || 
+    in == ')' ;
+}
+
+char flip(char c) {
+
+    switch(c) {
+
+        case '[':
+            return ']';
+        case '(':
+            return ')';
+        case '{':
+            return '}';
+        case '<':
+            return '>';
+        case ']':
+            return '[';
+        case ')':
+            return '(';
+        case '}': 
+            return '{';
+        case '>':
+            return '<';
+    }
+}
+
+list<Component> buildComponents(string in);
+void buildViewAndController(list<Component> tree);
+void buildAPI();
+
 //                      these four are in the cloud, while apiLink is the link to the cloud API
-string controller, view, apiFunctions, apiVariables, apiHandler, api, apiLink;
+string controller, view, apiFuncsAndVars, apiHandler, apiDeployer, apiLink;
 list<Function> functions;
 int anonIncrement = 0;
 
@@ -100,15 +209,15 @@ int anonIncrement = 0;
  * argc: 1
  * argv: [src_file_path]
  **/
-int main (int argc, char *argv[]) {
-
-    if (argc == 0) {
+void main (int argc, char *argv[]) {
+    
+    if (argc == 1) {
 
         printf("Please provide a source .m file");
         return;
     }
 
-    else if (argc > 1) {
+    else if (argc > 2) {
 
         printf("Too many arguments provided. Please only provide a source .m file");
         return;
@@ -126,14 +235,19 @@ int main (int argc, char *argv[]) {
 
     string currentProp, currentComponent, app;
     
-    ifstream src (argv[0]);
+    ifstream src (argv[1]);
     
     if (src.is_open()) {
 
         while(src.get(in)) {
 
+            printchar(in);
+            printf(": ");
+
             //otherwise handle functions
-            if (!isComment && in == '(' && src.peek() == '*') {
+            if (!isComment && !isString && in == '(' && src.peek() == '*') {
+
+                printf("comment start\n");
 
                 src.get(in);
                 isComment = true;
@@ -142,6 +256,8 @@ int main (int argc, char *argv[]) {
 
             if (isComment && in == '*' && src.peek() == ')') {
 
+                printf("comment end\n");
+
                 src.get(in);
                 isComment = false;
                 continue;
@@ -149,32 +265,65 @@ int main (int argc, char *argv[]) {
 
             if (isComment) {
 
+                printf("comment skip\n");
+
                 continue;
             }
 
             if (in == '\"') {
+
+                printf("string togg\n");
                 
-                acc += in;
+                if (isApp) {
+                    
+                    app += in;
+                }
+
+                else {
+
+                    acc += in;
+                }
+
                 isString = !isString;
                 continue;
             }
 
             if (isString) {
 
-                acc += in;
+                printf("string cont\n");
+
+                if (isApp) {
+
+                    app += in;
+                }
+
+                else {
+
+                    acc += in;
+                }
                 continue;
             }
 
             //check if app started
             if (!isApp) {
 
-                acc += in;
-                int l = acc.length();
+                string tempAcc = acc;
+                tempAcc += in;
+                int l = tempAcc.length();
+
+                if (l >= 5) {
+                    
+                    printf("\n checking isapp: ");
+                    cout << tempAcc.substr(l - 4, 4);
+                    printf("\n");
+                }
 
                 if (
-                    (!isComment && !isString && l >= 5 && acc.substr(l - 4, 4) == "App[" && isspace(acc.at(l - 5))) ||
-                    (acc == "App[")
+                    (!isComment && !isString && l >= 5 && tempAcc.substr(l - 4, 4) == "App[" && isspace(tempAcc.at(l - 5))) ||
+                    (tempAcc == "App[")
                 ) {
+
+                    printf("app start\n");
 
                     isApp = true;
                     brackets.push('[');
@@ -185,6 +334,8 @@ int main (int argc, char *argv[]) {
 
             //load in app
             if (isApp) {
+
+                printf("app loading\n");
 
                 if (in == ']') {
 
@@ -207,11 +358,19 @@ int main (int argc, char *argv[]) {
                     app += in;
                     continue;
                 }
+
+                else {
+
+                    app += in;
+                    continue;
+                }
             }
 
             if (in == ':' && src.peek() == '=') {
                 
                 if (acc.find_first_of('[') != string::npos && acc.find_first_of(']') != string::npos) {
+
+                    printf("function head done\n");
 
                     src.get(in);
 
@@ -221,6 +380,8 @@ int main (int argc, char *argv[]) {
                     continue;
                 }
 
+                printf("var");
+
                 acc += in;
                 continue;
             }
@@ -229,19 +390,25 @@ int main (int argc, char *argv[]) {
 
                 if (isFunctionBody) {
 
+                    printf("function body done\n");
+
                     acc += in;
                     Function newFunc;
                     newFunc.setHeader(functionHeader);
                     newFunc.setBody(acc);
                     functions.push_back(newFunc);
+                    apiFuncsAndVars += functionHeader + " := " + acc;
+                    functionHeader = "";
 
                     isFunctionBody = false;
                 }
 
                 else {
 
+                    printf("var done\n");
+
                     acc += in;
-                    apiVariables += acc;
+                    apiFuncsAndVars += acc;
                 }
                 acc = "";
                 continue;
@@ -249,17 +416,23 @@ int main (int argc, char *argv[]) {
 
             if (isOpening(in)) {
 
+                printf("bracket add\n");
+
                 acc += in;
                 brackets.push(in);
                 continue;
             }
 
-            if (isClosing(in) && brackets.top() == in) {
+            if (isClosing(in) && brackets.top() == flip(in)) {
+
+                printf("bracket remove\n");
 
                 acc += in;
                 brackets.pop();
                 continue;
             }
+
+            printf("regular load\n");
             
             acc += in;
         }
@@ -267,7 +440,14 @@ int main (int argc, char *argv[]) {
 
     src.close();
 
+    printf("%s\n", app);
+
     list<Component> tree = buildComponents(app);
+
+    for (Component c : tree) {
+
+        cout << c.toString();
+    }
 
     controller += "window.addEventListener(\'load\', async function() {\n";
     //adds to global view and controller strings
@@ -284,7 +464,7 @@ int main (int argc, char *argv[]) {
 
     viewF << view;
     controllerF << controller;
-    apiF << apiVariables + apiFunctions + apiHandler + api;
+    apiF << apiFuncsAndVars + apiHandler + apiDeployer;
 
     viewF.close();
     controllerF.close();
@@ -465,68 +645,13 @@ void buildAPI() {
 
     apiHandler += "APIHandler[func_] := Which[\n";
 
-    api += "CloudDeploy[APIFunction[{\"funcName\"->\"String\"}, APIHandler[#funcName]&], \"api\", Permissions -> \"Public\"]";
+    apiDeployer += "CloudDeploy[APIFunction[{\"funcName\"->\"String\"}, APIHandler[#funcName]&], \"api\", Permissions -> \"Public\"]";
 
     for (Function f : functions) {
 
-        apiFunctions += f.getHeader() + " := " + f.getBody();
         //                                              get rid of the [] at the end of the header
         apiHandler += "func == \"" + trim(f.getHeader()).substr(0, f.getHeader().length() - 2) + "\", " + trim(f.getHeader()) + ",\n";
     }
 
     apiHandler += "];\n";
-}
-
-std::string ltrim(const std::string& s)
-{
-	size_t start = s.find_first_not_of(WHITESPACE);
-	return (start == std::string::npos) ? "" : s.substr(start);
-}
-
-std::string rtrim(const std::string& s)
-{
-	size_t end = s.find_last_not_of(WHITESPACE);
-	return (end == std::string::npos) ? "" : s.substr(0, end + 1);
-}
-
-std::string trim(const std::string& s)
-{
-	return rtrim(ltrim(s));
-}
-
-bool isOpening(char in) {
-
-    return
-    in == '[' || 
-    in == '(';
-}
-
-bool isClosing(char in) {
-
-    return
-    in == ']' || 
-    in == ')' ;
-}
-
-char flip(char c) {
-
-    switch(c) {
-
-        case '[':
-            return ']';
-        case '(':
-            return ')';
-        case '{':
-            return '}';
-        case '<':
-            return '>';
-        case ']':
-            return '[';
-        case ')':
-            return '(';
-        case '}': 
-            return '{';
-        case '>':
-            return '<';
-    }
 }
