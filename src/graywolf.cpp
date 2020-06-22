@@ -51,7 +51,7 @@ class Component {
                         //boolean stores whether the value is a function or not
     unordered_map<string, string> props;
     list<Component> children;
-    string name;
+    string name, text;
 
     public:
 
@@ -80,6 +80,11 @@ class Component {
         name = s;
     }
 
+    void setText(string s) {
+
+        text = s;
+    }
+
     unordered_map<string, string> getProps() {
         
         return props;
@@ -95,9 +100,15 @@ class Component {
         return name;
     }
 
+    string getText() {
+
+        return text;
+    }
+
     string toString() {
 
         string ret = "Component(name: " + name + "\n";
+        ret += "text: " + text + "\n";
 
         for (pair<string, string> prop : props) {
 
@@ -478,6 +489,7 @@ list<Component> buildComponents(string in) {
     unordered_map<string, string> props;
     list<Component> children;
     string componentName = "";
+    string componentText = "";
 
     string propertyName = "";
     string propertyVal = "";
@@ -492,19 +504,27 @@ list<Component> buildComponents(string in) {
 
         char c = in[i];
 
+        printf("%c: ", c);
+
         if (c == '{') {
 
             if (isPropertyName) {
+
+                printf("loading property name");
 
                 propertyName += c;
             }
 
             else if (isPropertyVal) {
 
+                printf("loading property val");
+
                 propertyVal += c;
             }
 
             else {
+
+                printf("starting component name");
 
                 isComponentName = true;
             }
@@ -513,6 +533,8 @@ list<Component> buildComponents(string in) {
         else if (c == '[') {
 
             if (isComponentName) {
+
+                printf("starting property name");
 
                 isPropertyName = true;
                 isPropertyVal = false;
@@ -526,16 +548,20 @@ list<Component> buildComponents(string in) {
 
             if (brackets.size() == 1) {
 
+                printf("starting component name");
+
                 Component newComponent;
                 
                 newComponent.setProps(props);
-                newComponent.setName(componentName);
+                newComponent.setName(trim(componentName));
                 newComponent.setChildren(children);
+                newComponent.setText(trim(componentText));
 
                 l.push_back(newComponent);
 
                 props.clear();
                 componentName = "";
+                componentText = "";
                 children.clear();
 
                 isComponentName = true;
@@ -548,15 +574,19 @@ list<Component> buildComponents(string in) {
         else if (c == '-' && in.length() >= i + 2 && in[i + 1] == '>') {
 
             i ++;
-            isPropertyVal = false;
+            isPropertyVal = true;
             isPropertyName = false;
             isComponentName = false;
 
-            if (propertyName == "children") {
+            if (trim(propertyName) == "children") {
+
+                printf("starting children with ");
 
                 int closingBracket = in.find_last_of(']');
                 int len = closingBracket - i;
                 string newIn = in.substr(i, len);
+
+                cout << newIn;
                 
                 children = buildComponents(newIn);
             }
@@ -564,30 +594,50 @@ list<Component> buildComponents(string in) {
 
         else if (c == ',') {
 
-            if (brackets.size() == 1) {
+            if (isPropertyName && brackets.size() == 1) {
 
-                isPropertyName = true;
-                isPropertyVal = false;
-                isComponentName = false;
+                printf("closing text");
 
-                props[propertyName] = propertyVal;
+                componentText = trim(propertyName);
+                propertyName = "";
             }
+
+            else if (isPropertyVal && brackets.size() == 1) {
+
+                printf("closing property, starting next");
+
+                props[trim(propertyName)] = trim(propertyVal);
+                propertyName = "";
+                propertyVal = "";
+            }
+
+            isPropertyName = true;
+            isPropertyVal = false;
+            isComponentName = false;
         }
 
         else if (isComponentName) {
+
+            printf("loading component name");
 
             componentName += c;
         }
 
         else if (isPropertyName) {
 
+            printf("loading property name");
+
             propertyName += c;
         }
 
         else if (isPropertyVal) {
 
+            printf("loading property val");
+
             propertyVal += c;
         }
+
+        printf("\n");
     }
 
     return l;
