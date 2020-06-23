@@ -51,7 +51,7 @@ class Component {
                         //boolean stores whether the value is a function or not
     unordered_map<string, string> props;
     list<Component> children;
-    string name, text;
+    std::string name, text;
 
     public:
 
@@ -63,6 +63,11 @@ class Component {
     void setProps(unordered_map<string, string> map) {
 
         props = map;
+    }
+
+    void setProp(string name, string val) {
+
+        props[name] = val;
     }
 
     void addChild(Component c) {
@@ -204,6 +209,22 @@ char flip(char c) {
         case '>':
             return '<';
     }
+}
+
+int charCount(string s, char c) {
+
+    int ret = 0;
+
+    for (string::size_type i = 0; i < s.size(); i ++) {
+
+        char sC = s[i];
+        if (sC == c) {
+
+            ret ++;
+        }
+    }
+
+    return ret;
 }
 
 list<Component> buildComponents(string in);
@@ -530,6 +551,12 @@ list<Component> buildComponents(string in) {
             }
         }
 
+        else if (c == '}' && isComponentName) {
+            
+            printf("RETURNING\n");
+            return l;
+        }
+
         else if (c == '[') {
 
             if (isComponentName) {
@@ -541,12 +568,39 @@ list<Component> buildComponents(string in) {
                 isComponentName = false;
             }
 
+            else if (isPropertyName) {
+
+                propertyName += c;
+            }
+
+            else if (isPropertyVal) {
+
+                propertyVal += c;
+            }
+
             brackets.push('[');
         }
 
         else if (c == ']') {
 
             if (brackets.size() == 1) {
+
+                if (isPropertyName) {
+
+                    printf("closing text");
+
+                    componentText = trim(propertyName);
+                    propertyName = "";
+                }
+
+                else if (isPropertyVal) {
+
+                    printf("closing property, starting next");
+
+                    props[trim(propertyName)] = trim(propertyVal);
+                    propertyName = "";
+                    propertyVal = "";
+                }
 
                 printf("starting component name");
 
@@ -567,6 +621,16 @@ list<Component> buildComponents(string in) {
                 isComponentName = true;
                 isPropertyName = false;
                 isPropertyVal = false;
+            }
+
+            else if (isPropertyName) {
+
+                propertyName += c;
+            }
+
+            else if (isPropertyVal) {
+
+                propertyVal += c;
             }
             brackets.pop();
         }
@@ -589,6 +653,26 @@ list<Component> buildComponents(string in) {
                 cout << newIn;
                 
                 children = buildComponents(newIn);
+
+                
+
+                printf("starting component name");
+
+                Component newComponent;
+                
+                newComponent.setProps(props);
+                newComponent.setName(trim(componentName));
+                newComponent.setChildren(children);
+                newComponent.setText(trim(componentText));
+
+                l.push_back(newComponent);
+
+                props.clear();
+                componentName = "";
+                componentText = "";
+                children.clear();
+
+                return l;
             }
         }
 
@@ -649,18 +733,21 @@ void buildViewAndController(list<Component> tree) {
 
         view += "<" + c.getName() + "\n";
 
-        if (c.getProps()["id"] != "") {
-
-            view += "id = " + c.getProps()["id"] + "\n";
+        if (c.getProps()["id"] == "") {
+            
+            c.setProp("id", "\"anon" + to_string(anonIncrement) + "\"");
         }
+        
+        view += "id = " + c.getProps()["id"] + "\n";
+
+        cout << "building view for: " << c.toString() << "\n";
         
         for (pair<string, string> prop : c.getProps()) {
             
             if (prop.first != "id") {
             
                 //check if just a string val
-                if (count(prop.second.begin(), prop.second.end(), '\"') == 2 && prop.second.find_first_of('\"') == 0 && prop.second.find_last_of('\"') == prop.second.length() - 1) {
-
+                if (charCount(prop.second, '\"') == 2 && prop.second.find_first_of('\"') == 0 && prop.second.find_last_of('\"') == prop.second.length() - 1) {
 
                     view += prop.first + "=" + prop.second + "\n";
                 }
@@ -669,13 +756,15 @@ void buildViewAndController(list<Component> tree) {
 
                     if (c.getProps()["id"] != "") {
 
+                        cout << "function for id: " << c.getProps()["id"] << "\n";
+
                         Function newFunc;
                         newFunc.setHeader("set" + c.getProps()["id"] + prop.first);
                         newFunc.setBody(prop.second + "\n");
                         functions.push_back(newFunc);
 
-                        controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"] + prop.first + ", function(res) {\n"
-                        + "document.getElementById(\"" + c.getProps()["id"] + "\".textContent = res" + "\n"
+                        controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + prop.first + ", function(res) {\n"
+                        + "document.getElementById(\"" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + "\".textContent = res" + "\n"
                         + "});\n";
                         view += prop.first + "=" + "\"\"\n";
                     }
@@ -684,6 +773,33 @@ void buildViewAndController(list<Component> tree) {
         }
 
         view += ">\n";
+
+        //same as above but for text
+        if (charCount(c.getText(), '\"') == 2 && c.getText().find_first_of('\"') == 0 && c.getText().find_last_of('\"') == c.getText().length() - 1) {
+
+            cout << "773 " << c.getText() << "\n";
+
+            view += c.getText() + "\n";
+        }
+        
+        else {
+
+            cout << "780 " << c.getText() << "\n";
+
+            if (c.getProps()["id"] != "") {
+
+                cout << "function for id: " << c.getProps()["id"] << "\n";
+
+                Function newFunc;
+                newFunc.setHeader("set" + c.getProps()["id"] + "Text");
+                newFunc.setBody(c.getText() + "\n");
+                functions.push_back(newFunc);
+
+                controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + "Text, function(res) {\n"
+                + "document.getElementById(\"" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + "\".textContent = res" + "\n"
+                + "});\n";
+            }
+        }
 
         buildViewAndController(c.getChildren());
 
@@ -699,6 +815,7 @@ void buildAPI() {
 
     for (Function f : functions) {
 
+        cout << f.toString() << "\n";
         //                                              get rid of the [] at the end of the header
         apiHandler += "func == \"" + trim(f.getHeader()).substr(0, f.getHeader().length() - 2) + "\", " + trim(f.getHeader()) + ",\n";
     }

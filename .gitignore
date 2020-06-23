@@ -1,3 +1,4 @@
 .trash
 .reference
 node_modules
+vcpkg

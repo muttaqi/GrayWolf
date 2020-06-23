@@ -1,3 +1,5 @@
+(* ::Package:: *)
+
 var = "here is some ";
 
 text[] := (
