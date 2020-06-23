@@ -6,6 +6,8 @@
 #include <list>
 #include <tuple>
 #include <string>
+#include <stdio.h>
+#include <stdexcept>
 using namespace std;
 
 const std::string WHITESPACE = " \n\r\t\f\v";
@@ -227,9 +229,32 @@ int charCount(string s, char c) {
     return ret;
 }
 
+string exec(string command) {
+   char buffer[128];
+   string result = "";
+
+   // Open pipe to file
+   FILE* pipe = _popen(command.c_str(), "r");
+   if (!pipe) {
+      return "popen failed!";
+   }
+
+   // read till end of process:
+   while (!feof(pipe)) {
+
+      // use buffer to read and add to result
+      if (fgets(buffer, 128, pipe) != NULL)
+         result += buffer;
+   }
+
+   _pclose(pipe);
+   return result;
+}
+
 list<Component> buildComponents(string in);
-void buildViewAndController(list<Component> tree);
+list<Component> buildViewAndFunctions(list<Component> tree);
 void buildAPI();
+void buildController(list<Component> tree);
 
 //                      these four are in the cloud, while apiLink is the link to the cloud API
 string controller, view, apiFuncsAndVars, apiHandler, apiDeployer, apiLink;
@@ -243,15 +268,16 @@ int anonIncrement = 0;
  **/
 void main (int argc, char *argv[]) {
     
-    if (argc == 1) {
+    if (argc > 2) {
 
-        printf("Please provide a source .m file");
+        printf("Too many arguments provided. Please only provide a source .m file");
         return;
     }
 
-    else if (argc > 2) {
+    string srcName = argv[1];
+    if (argc == 1 || srcName.length() < 3 || srcName.substr(srcName.length() - 2, 2) != ".m") {
 
-        printf("Too many arguments provided. Please only provide a source .m file");
+        printf("Please provide a source .m file");
         return;
     }
 
@@ -273,13 +299,8 @@ void main (int argc, char *argv[]) {
 
         while(src.get(in)) {
 
-            printchar(in);
-            printf(": ");
-
             //otherwise handle functions
             if (!isComment && !isString && in == '(' && src.peek() == '*') {
-
-                printf("comment start\n");
 
                 src.get(in);
                 isComment = true;
@@ -288,8 +309,6 @@ void main (int argc, char *argv[]) {
 
             if (isComment && in == '*' && src.peek() == ')') {
 
-                printf("comment end\n");
-
                 src.get(in);
                 isComment = false;
                 continue;
@@ -297,14 +316,10 @@ void main (int argc, char *argv[]) {
 
             if (isComment) {
 
-                printf("comment skip\n");
-
                 continue;
             }
 
             if (in == '\"') {
-
-                printf("string togg\n");
                 
                 if (isApp) {
                     
@@ -321,8 +336,6 @@ void main (int argc, char *argv[]) {
             }
 
             if (isString) {
-
-                printf("string cont\n");
 
                 if (isApp) {
 
@@ -343,19 +356,10 @@ void main (int argc, char *argv[]) {
                 tempAcc += in;
                 int l = tempAcc.length();
 
-                if (l >= 5) {
-                    
-                    printf("\n checking isapp: ");
-                    cout << tempAcc.substr(l - 4, 4);
-                    printf("\n");
-                }
-
                 if (
                     (!isComment && !isString && l >= 5 && tempAcc.substr(l - 4, 4) == "App[" && isspace(tempAcc.at(l - 5))) ||
                     (tempAcc == "App[")
                 ) {
-
-                    printf("app start\n");
 
                     isApp = true;
                     brackets.push('[');
@@ -366,8 +370,6 @@ void main (int argc, char *argv[]) {
 
             //load in app
             if (isApp) {
-
-                printf("app loading\n");
 
                 if (in == ']') {
 
@@ -402,8 +404,6 @@ void main (int argc, char *argv[]) {
                 
                 if (acc.find_first_of('[') != string::npos && acc.find_first_of(']') != string::npos) {
 
-                    printf("function head done\n");
-
                     src.get(in);
 
                     functionHeader = acc;
@@ -411,8 +411,6 @@ void main (int argc, char *argv[]) {
                     acc = "";
                     continue;
                 }
-
-                printf("var");
 
                 acc += in;
                 continue;
@@ -422,13 +420,7 @@ void main (int argc, char *argv[]) {
 
                 if (isFunctionBody) {
 
-                    printf("function body done\n");
-
                     acc += in;
-                    Function newFunc;
-                    newFunc.setHeader(functionHeader);
-                    newFunc.setBody(acc);
-                    functions.push_back(newFunc);
                     apiFuncsAndVars += functionHeader + " := " + acc;
                     functionHeader = "";
 
@@ -436,8 +428,6 @@ void main (int argc, char *argv[]) {
                 }
 
                 else {
-
-                    printf("var done\n");
 
                     acc += in;
                     apiFuncsAndVars += acc;
@@ -448,8 +438,6 @@ void main (int argc, char *argv[]) {
 
             if (isOpening(in)) {
 
-                printf("bracket add\n");
-
                 acc += in;
                 brackets.push(in);
                 continue;
@@ -457,14 +445,10 @@ void main (int argc, char *argv[]) {
 
             if (isClosing(in) && brackets.top() == flip(in)) {
 
-                printf("bracket remove\n");
-
                 acc += in;
                 brackets.pop();
                 continue;
             }
-
-            printf("regular load\n");
             
             acc += in;
         }
@@ -472,18 +456,11 @@ void main (int argc, char *argv[]) {
 
     src.close();
 
-    printf("%s\n", app);
-
     list<Component> tree = buildComponents(app);
 
-    for (Component c : tree) {
-
-        cout << c.toString();
-    }
-
     controller += "window.addEventListener(\'load\', async function() {\n";
-    //adds to global view and controller strings
-    buildViewAndController(tree);
+    //adds to global view and functions variables
+    tree = buildViewAndFunctions(tree);
     controller += "});";
 
     //adds to global apiFunctions, apiHandler and api strings (apiVariables is already set up at this point)
@@ -492,15 +469,32 @@ void main (int argc, char *argv[]) {
     ofstream viewF, controllerF, apiF;
     viewF.open("index.html");
     controllerF.open("controller.js");
-    apiF.open("api.wls");
+    apiF.open("api.wl");
 
     viewF << view;
-    controllerF << controller;
     apiF << apiFuncsAndVars + apiHandler + apiDeployer;
 
-    viewF.close();
-    controllerF.close();
     apiF.close();
+    viewF.close();
+
+    apiLink = exec(
+        "wolframscript -file api.wl"
+    );
+
+    if (apiLink.length() < 13 || apiLink.substr(0, 12) != "CloudObject[") {
+
+        cout << "Deploying API failed. Aborting compilation.\n";
+        return;
+    }
+
+    apiLink = apiLink.substr(12, apiLink.length() - 14);
+    
+    //writes to global controller string
+    buildController(tree);
+
+    controllerF << controller;
+
+    controllerF.close();
 }
 
 list<Component> buildComponents(string in) {
@@ -525,27 +519,19 @@ list<Component> buildComponents(string in) {
 
         char c = in[i];
 
-        printf("%c: ", c);
-
         if (c == '{') {
 
             if (isPropertyName) {
-
-                printf("loading property name");
 
                 propertyName += c;
             }
 
             else if (isPropertyVal) {
 
-                printf("loading property val");
-
                 propertyVal += c;
             }
 
             else {
-
-                printf("starting component name");
 
                 isComponentName = true;
             }
@@ -553,15 +539,12 @@ list<Component> buildComponents(string in) {
 
         else if (c == '}' && isComponentName) {
             
-            printf("RETURNING\n");
             return l;
         }
 
         else if (c == '[') {
 
             if (isComponentName) {
-
-                printf("starting property name");
 
                 isPropertyName = true;
                 isPropertyVal = false;
@@ -587,22 +570,16 @@ list<Component> buildComponents(string in) {
 
                 if (isPropertyName) {
 
-                    printf("closing text");
-
                     componentText = trim(propertyName);
                     propertyName = "";
                 }
 
                 else if (isPropertyVal) {
 
-                    printf("closing property, starting next");
-
                     props[trim(propertyName)] = trim(propertyVal);
                     propertyName = "";
                     propertyVal = "";
                 }
-
-                printf("starting component name");
 
                 Component newComponent;
                 
@@ -644,19 +621,11 @@ list<Component> buildComponents(string in) {
 
             if (trim(propertyName) == "children") {
 
-                printf("starting children with ");
-
                 int closingBracket = in.find_last_of(']');
                 int len = closingBracket - i;
                 string newIn = in.substr(i, len);
-
-                cout << newIn;
                 
                 children = buildComponents(newIn);
-
-                
-
-                printf("starting component name");
 
                 Component newComponent;
                 
@@ -680,15 +649,11 @@ list<Component> buildComponents(string in) {
 
             if (isPropertyName && brackets.size() == 1) {
 
-                printf("closing text");
-
                 componentText = trim(propertyName);
                 propertyName = "";
             }
 
             else if (isPropertyVal && brackets.size() == 1) {
-
-                printf("closing property, starting next");
 
                 props[trim(propertyName)] = trim(propertyVal);
                 propertyName = "";
@@ -702,47 +667,40 @@ list<Component> buildComponents(string in) {
 
         else if (isComponentName) {
 
-            printf("loading component name");
-
             componentName += c;
         }
 
         else if (isPropertyName) {
-
-            printf("loading property name");
 
             propertyName += c;
         }
 
         else if (isPropertyVal) {
 
-            printf("loading property val");
-
             propertyVal += c;
         }
-
-        printf("\n");
     }
 
     return l;
 }
 
-void buildViewAndController(list<Component> tree) {
+list<Component> buildViewAndFunctions(list<Component> tree) {
 
-    for (Component c : tree) {
+    list<Component> newTree;
 
-        view += "<" + c.getName() + "\n";
+    for (auto it = tree.begin(); it != tree.end(); it ++) {
 
-        if (c.getProps()["id"] == "") {
+        view += "<" + it->getName() + "\n";
+
+        if (it->getProps()["id"] == "") {
             
-            c.setProp("id", "\"anon" + to_string(anonIncrement) + "\"");
+            it->setProp("id", "\"anon" + to_string(anonIncrement) + "\"");
+            anonIncrement++;
         }
         
-        view += "id = " + c.getProps()["id"] + "\n";
-
-        cout << "building view for: " << c.toString() << "\n";
+        view += "id = " + it->getProps()["id"] + "\n";
         
-        for (pair<string, string> prop : c.getProps()) {
+        for (pair<string, string> prop : it->getProps()) {
             
             if (prop.first != "id") {
             
@@ -754,18 +712,13 @@ void buildViewAndController(list<Component> tree) {
                 
                 else {
 
-                    if (c.getProps()["id"] != "") {
-
-                        cout << "function for id: " << c.getProps()["id"] << "\n";
+                    if (it->getProps()["id"] != "") {
 
                         Function newFunc;
-                        newFunc.setHeader("set" + c.getProps()["id"] + prop.first);
+                        newFunc.setHeader("set" + it->getProps()["id"] + prop.first);
                         newFunc.setBody(prop.second + "\n");
                         functions.push_back(newFunc);
 
-                        controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + prop.first + ", function(res) {\n"
-                        + "document.getElementById(\"" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + "\".textContent = res" + "\n"
-                        + "});\n";
                         view += prop.first + "=" + "\"\"\n";
                     }
                 }
@@ -775,50 +728,87 @@ void buildViewAndController(list<Component> tree) {
         view += ">\n";
 
         //same as above but for text
-        if (charCount(c.getText(), '\"') == 2 && c.getText().find_first_of('\"') == 0 && c.getText().find_last_of('\"') == c.getText().length() - 1) {
+        if (charCount(it->getText(), '\"') == 2 && it->getText().find_first_of('\"') == 0 && it->getText().find_last_of('\"') == it->getText().length() - 1) {
 
-            cout << "773 " << c.getText() << "\n";
-
-            view += c.getText() + "\n";
+            view += it->getText() + "\n";
         }
         
         else {
 
-            cout << "780 " << c.getText() << "\n";
-
-            if (c.getProps()["id"] != "") {
-
-                cout << "function for id: " << c.getProps()["id"] << "\n";
+            if (it->getProps()["id"] != "") {
 
                 Function newFunc;
-                newFunc.setHeader("set" + c.getProps()["id"] + "Text");
-                newFunc.setBody(c.getText() + "\n");
+                newFunc.setHeader("set" + it->getProps()["id"].substr(1, it->getProps()["id"].length() - 2) + "Text");
+                newFunc.setBody(it->getText() + "\n");
                 functions.push_back(newFunc);
-
-                controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + "Text, function(res) {\n"
-                + "document.getElementById(\"" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + "\".textContent = res" + "\n"
-                + "});\n";
             }
         }
 
-        buildViewAndController(c.getChildren());
+        it->setChildren(buildViewAndFunctions(it->getChildren()));
 
-        view += "</" + c.getName() + ">\n";
+        view += "</" + it->getName() + ">\n";
+
+        newTree.push_back(*it);
     }
+
+    return newTree;
 }
 
 void buildAPI() {
 
     apiHandler += "APIHandler[func_] := Which[\n";
 
-    apiDeployer += "CloudDeploy[APIFunction[{\"funcName\"->\"String\"}, APIHandler[#funcName]&], \"api\", Permissions -> \"Public\"]";
+    apiDeployer += "Print[CloudDeploy[APIFunction[{\"funcName\"->\"String\"}, APIHandler[#funcName]&], \"api\", Permissions -> \"Public\"]]";
 
     for (Function f : functions) {
 
-        cout << f.toString() << "\n";
+        apiFuncsAndVars += f.getHeader() + " := " + trim(f.getBody()) + ";\n";
+
         //                                              get rid of the [] at the end of the header
-        apiHandler += "func == \"" + trim(f.getHeader()).substr(0, f.getHeader().length() - 2) + "\", " + trim(f.getHeader()) + ",\n";
+        apiHandler += "func == \"" + trim(f.getHeader()) + "\", " + trim(f.getHeader()) + "[],\n";
     }
 
+    apiHandler = apiHandler.substr(0, apiHandler.length() - 2);
+
     apiHandler += "];\n";
+}
+
+void buildController(list<Component> tree) {
+
+    for (Component c : tree) {
+        
+        for (pair<string, string> prop : c.getProps()) {
+
+            if (prop.first != "id") {
+            
+                //check if just a string val
+                if (!(
+                    charCount(prop.second, '\"') == 2 && prop.second.find_first_of('\"') == 0 && prop.second.find_last_of('\"') == prop.second.length() - 1
+                )) {
+
+                    if (c.getProps()["id"] != "") {
+
+                        controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + prop.first + ", function(res) {\n"
+                        + "document.getElementById(\"" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + "\".textContent = res" + "\n"
+                        + "});\n";
+                    }
+                }
+            }
+        }
+
+        //same as above but for text
+        if (!(
+            charCount(c.getText(), '\"') == 2 && c.getText().find_first_of('\"') == 0 && c.getText().find_last_of('\"') == c.getText().length() - 1
+        )) {
+
+            if (c.getProps()["id"] != "") {
+
+                controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + "Text\', function(res) {\n"
+                + "document.getElementById(\"" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + "\").textContent = res;\n"
+                + "});\n";
+            }
+        }
+
+        buildController(c.getChildren());
+    }
 }
