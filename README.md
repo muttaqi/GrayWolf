@@ -1,4 +1,4 @@
-![Graywolf Banner](/images/graywolf-banner)
+![Graywolf Banner](/images/graywolf-banner.png)
 
 Graywolf is a lightweight web application framework for the Wolfram language.
 
@@ -31,7 +31,7 @@ GrayWolf lets you:
  
 ## Architecture
 
-![GrayWolf Architecure](/images/graywolf-architecture)
+![GrayWolf Architecure](/images/graywolf-architecture.png)
 
 ## Restrictions
 
