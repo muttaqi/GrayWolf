@@ -40,7 +40,7 @@ There are a few restrictions to be followed for the compiler to work:
 * String based properties only
 * No '(*', '*)', '[', ']', or '->' can be present in a string in the app tree
 * Only atomic functions with no stateful parameters can be used, and only for components with ids (thus, no event properties yet)
-* No empty ids, or ids of the form 'AnonX' where X is an integer
+* No empty ids, or ids of the form 'anonX' where X is an integer
 * No function can be named ApiHandler
 
 I am working towards lifting most of these restrictions.
