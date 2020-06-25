@@ -13,7 +13,7 @@ git clone https://github.com/muttaqi/GrayWolf.git
 ## Usage
 
 ```bash
-graywolf app.m
+graywolf MyApp/app.m -o MyApp
 ```
 
 An example app can be found under the 'example' folder.
