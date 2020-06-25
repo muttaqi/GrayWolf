@@ -8,6 +8,7 @@
 #include <string>
 #include <stdio.h>
 #include <stdexcept>
+#include <sstream>
 using namespace std;
 
 const std::string WHITESPACE = " \n\r\t\f\v";
@@ -53,7 +54,8 @@ class Component {
                         //boolean stores whether the value is a function or not
     unordered_map<string, string> props;
     list<Component> children;
-    std::string name, text;
+    string name;
+    string text = "";
 
     public:
 
@@ -251,15 +253,16 @@ string exec(string command) {
    return result;
 }
 
-list<Component> buildComponents(string in);
+list<Component> buildComponents();
 list<Component> buildViewAndFunctions(list<Component> tree);
 void buildAPI();
 void buildController(list<Component> tree);
 
 //                      these four are in the cloud, while apiLink is the link to the cloud API
-string controller, view, apiFuncsAndVars, apiHandler, apiDeployer, apiLink;
+string app, controller, view, apiFuncsAndVars, apiHandler, apiDeployer, apiLink;
 list<Function> functions;
 int anonIncrement = 0;
+string::size_type appI = 0;
 
 /**
  * expected:
@@ -267,18 +270,36 @@ int anonIncrement = 0;
  * argv: [src_file_path]
  **/
 void main (int argc, char *argv[]) {
-    
-    if (argc > 2) {
+
+    if (argc > 4) {
 
         printf("Too many arguments provided. Please only provide a source .m file");
         return;
     }
 
-    string srcName = argv[1];
-    if (argc == 1 || srcName.length() < 3 || srcName.substr(srcName.length() - 2, 2) != ".m") {
+    if (argc == 1) {
 
         printf("Please provide a source .m file");
         return;
+    }
+
+    string srcName = argv[1];
+    if (srcName.length() < 3 || srcName.substr(srcName.length() - 2, 2) != ".m") {
+
+        printf("Please provide a source .m file");
+        return;
+    }
+
+    string outPath = "";
+    string flag = "";
+    if (argc == 4) {
+
+        flag = argv[2];
+    }
+
+    if (flag == "-o") {
+
+        outPath = argv[3];
     }
 
     char in, next;
@@ -291,7 +312,7 @@ void main (int argc, char *argv[]) {
         isComponent = false;
     string functionHeader = "";
 
-    string currentProp, currentComponent, app;
+    string currentProp, currentComponent;
     
     ifstream src (argv[1]);
     
@@ -456,30 +477,47 @@ void main (int argc, char *argv[]) {
 
     src.close();
 
-    list<Component> tree = buildComponents(app);
+    list<Component> tree = buildComponents();
 
-    controller += "window.addEventListener(\'load\', async function() {\n";
     //adds to global view and functions variables
     tree = buildViewAndFunctions(tree);
-    controller += "});";
 
     //adds to global apiFunctions, apiHandler and api strings (apiVariables is already set up at this point)
     buildAPI();
 
     ofstream viewF, controllerF, apiF;
-    viewF.open("index.html");
-    controllerF.open("controller.js");
-    apiF.open("api.wl");
+
+    if (outPath != "") {
+        viewF.open(outPath + "/index.html");
+        controllerF.open(outPath + "/controller.js");
+
+        apiF.open(outPath + "/api.wl");
+        apiF << apiFuncsAndVars + apiHandler + apiDeployer;
+        apiF.close();
+
+        apiLink = exec(
+            "wolframscript -file " + outPath + "/api.wl"
+        );
+    }
+
+    else {
+        viewF.open(outPath + "index.html");
+        controllerF.open(outPath + "controller.js");
+
+        apiF.open("api.wl");
+
+        apiF << apiFuncsAndVars + apiHandler + apiDeployer;
+
+        apiF.close();
+
+
+        apiLink = exec(
+            "wolframscript -file api.wl"
+        );
+    }
 
     viewF << view;
-    apiF << apiFuncsAndVars + apiHandler + apiDeployer;
-
-    apiF.close();
     viewF.close();
-
-    apiLink = exec(
-        "wolframscript -file api.wl"
-    );
 
     if (apiLink.length() < 13 || apiLink.substr(0, 12) != "CloudObject[") {
 
@@ -488,16 +526,27 @@ void main (int argc, char *argv[]) {
     }
 
     apiLink = apiLink.substr(12, apiLink.length() - 14);
-    
+
+    ifstream utilF ("bin/util.js", std::ifstream::in);
+
+    if (utilF.is_open()) {
+        std::stringstream utilBuffer;
+        utilBuffer << utilF.rdbuf();
+        
+        controller += utilBuffer.str() + "\n";
+    }
+
+    controller += "window.addEventListener(\'load\', async function() {\n";
     //writes to global controller string
     buildController(tree);
+    controller += "});";
 
     controllerF << controller;
 
     controllerF.close();
 }
 
-list<Component> buildComponents(string in) {
+list<Component> buildComponents() {
 
     list<Component> l;
 
@@ -515,9 +564,9 @@ list<Component> buildComponents(string in) {
     bool isComment = false;
     stack<char> brackets;
 
-    for (string::size_type i = 0; i < in.size(); i ++) {
+    while(appI < app.size()) {
 
-        char c = in[i];
+        char c = app[appI];
 
         if (c == '{') {
 
@@ -539,6 +588,12 @@ list<Component> buildComponents(string in) {
 
         else if (c == '}' && isComponentName) {
             
+            while (app[appI] != ',' && appI < app.length()) {
+
+                appI ++;
+            }
+            appI ++;
+
             return l;
         }
 
@@ -593,6 +648,8 @@ list<Component> buildComponents(string in) {
                 props.clear();
                 componentName = "";
                 componentText = "";
+                propertyName = "";
+                propertyVal = "";
                 children.clear();
 
                 isComponentName = true;
@@ -612,20 +669,16 @@ list<Component> buildComponents(string in) {
             brackets.pop();
         }
 
-        else if (c == '-' && in.length() >= i + 2 && in[i + 1] == '>') {
+        else if (c == '-' && app.length() >= appI + 2 && app[appI + 1] == '>') {
 
-            i ++;
+            appI ++;
             isPropertyVal = true;
             isPropertyName = false;
             isComponentName = false;
 
             if (trim(propertyName) == "children") {
-
-                int closingBracket = in.find_last_of(']');
-                int len = closingBracket - i;
-                string newIn = in.substr(i, len);
                 
-                children = buildComponents(newIn);
+                children = buildComponents();
 
                 Component newComponent;
                 
@@ -639,9 +692,13 @@ list<Component> buildComponents(string in) {
                 props.clear();
                 componentName = "";
                 componentText = "";
+                propertyName = "";
+                propertyVal = "";
                 children.clear();
 
-                return l;
+                isComponentName = true;
+                isPropertyName = false;
+                isPropertyVal = false;
             }
         }
 
@@ -679,6 +736,8 @@ list<Component> buildComponents(string in) {
 
             propertyVal += c;
         }
+
+        appI ++;
     }
 
     return l;
@@ -730,10 +789,10 @@ list<Component> buildViewAndFunctions(list<Component> tree) {
         //same as above but for text
         if (charCount(it->getText(), '\"') == 2 && it->getText().find_first_of('\"') == 0 && it->getText().find_last_of('\"') == it->getText().length() - 1) {
 
-            view += it->getText() + "\n";
+            view += it->getText().substr(1, it->getText().length() - 2) + "\n";
         }
         
-        else {
+        else if (it->getText() != "") {
 
             if (it->getProps()["id"] != "") {
 
@@ -762,13 +821,16 @@ void buildAPI() {
 
     for (Function f : functions) {
 
-        apiFuncsAndVars += f.getHeader() + " := " + trim(f.getBody()) + ";\n";
+        apiFuncsAndVars += f.getHeader() + "[] := " + trim(f.getBody()) + ";\n";
 
         //                                              get rid of the [] at the end of the header
         apiHandler += "func == \"" + trim(f.getHeader()) + "\", " + trim(f.getHeader()) + "[],\n";
     }
 
-    apiHandler = apiHandler.substr(0, apiHandler.length() - 2);
+    if (functions.size() > 0) {
+    
+        apiHandler = apiHandler.substr(0, apiHandler.length() - 2);
+    }
 
     apiHandler += "];\n";
 }
@@ -799,7 +861,8 @@ void buildController(list<Component> tree) {
         //same as above but for text
         if (!(
             charCount(c.getText(), '\"') == 2 && c.getText().find_first_of('\"') == 0 && c.getText().find_last_of('\"') == c.getText().length() - 1
-        )) {
+        ) && c.getText() != ""
+        ) {
 
             if (c.getProps()["id"] != "") {
 

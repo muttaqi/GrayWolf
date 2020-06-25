@@ -1,15 +1,15 @@
 
 
-var = "here is some ";
+var = "Hello world ";
 
 text[]  :=  (
 
-    s = "cloud generated text";
+    s = "from the Wolfram Cloud!";
     var <> s
 )
 
 
-setanon0Text := text[];
+setanon3Text[] := text[];
 APIHandler[func_] := Which[
-func == "setanon0Text", setanon0Text[]];
+func == "setanon3Text", setanon3Text[]];
 Print[CloudDeploy[APIFunction[{"funcName"->"String"}, APIHandler[#funcName]&], "api", Permissions -> "Public"]]

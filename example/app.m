@@ -10,12 +10,24 @@ text[] := (
 
 App[{
 
-    a[
-        "Text",
-        id -> "aId",
+    head[
         children -> {
-            p[
-                text[]
+            script[
+                src -> "./controller.js"
+            ]
+        }
+    ],
+    
+    body[
+        children -> {
+            a[
+                "Welcome to GrayWolf",
+                id -> "aId",
+                children -> {
+                    p[
+                        text[]
+                    ]
+                }
             ]
         }
     ]
