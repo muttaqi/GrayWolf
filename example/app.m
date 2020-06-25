@@ -1,10 +1,10 @@
 (* ::Package:: *)
 
-var = "here is some ";
+var = "Hello world ";
 
 text[] := (
 
-    s = "cloud generated text";
+    s = "from the Wolfram Cloud!";
     var <> s
 )
 
