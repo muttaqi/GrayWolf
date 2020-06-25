@@ -861,7 +861,8 @@ void buildController(list<Component> tree) {
         //same as above but for text
         if (!(
             charCount(c.getText(), '\"') == 2 && c.getText().find_first_of('\"') == 0 && c.getText().find_last_of('\"') == c.getText().length() - 1
-        ) && c.getText() != ""
+            ) 
+            && c.getText() != ""
         ) {
 
             if (c.getProps()["id"] != "") {
