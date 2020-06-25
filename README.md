@@ -31,11 +31,11 @@ GrayWolf lets you:
  
 ## Architecture
 
-![GrayWolf Architecure](/images/graywolf-architecture.png)
+![GrayWolf Architecure](/images/architecture.png)
 
 ## Restrictions
 
-There are a few simple restrictions for the compiler to work:
+There are a few restrictions to be followed for the compiler to work:
 * Children must be the last member of a component's association list
 * String based properties only
 * No '(*', '*)', '[', ']', or '->' can be present in a string in the app *tree
@@ -44,3 +44,12 @@ There are a few simple restrictions for the compiler to work:
 * No function can be named ApiHandler
 
 I am working towards lifting most of these restrictions.
+
+## Future Plans
+
+Here are some features I am currently working on implementing:
+* More flexible parsing using Wolfram TreeMaps
+* API variable handling
+* Stateful views and variable binding
+* Secure APIs through authorization middleware
+* Model interface for Cloud databases
