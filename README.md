@@ -48,8 +48,8 @@ I am working towards lifting most of these restrictions.
 ## Future Plans
 
 Here are some features I am currently working on implementing:
-* More flexible parsing using Wolfram TreeMaps
+* More flexible parsing using Wolfram's JSON export function
 * API variable handling
 * Stateful views and variable binding
 * Secure APIs through authorization middleware
-* Model interface for Cloud databases
+* Model interface for cloud databases
