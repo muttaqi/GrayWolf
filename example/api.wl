@@ -10,6 +10,8 @@ text[]  :=  (
 
 
 setanon3Text[] := text[];
+setimagesrc[] := BaseEncode[ExportByteArray[Graphics[Circle[]], "JPG"]];
 APIHandler[func_] := Which[
-func == "setanon3Text", setanon3Text[]];
+func == "setanon3Text", setanon3Text[],
+func == "setimagesrc", setimagesrc[]];
 Print[CloudDeploy[APIFunction[{"funcName"->"String"}, APIHandler[#funcName]&], "api", Permissions -> "Public"]]

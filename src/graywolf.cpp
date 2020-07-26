@@ -290,6 +290,19 @@ void main (int argc, char *argv[]) {
         return;
     }
 
+    string binPrepend = argv[0];
+    int lastSlash = binPrepend.find_last_of("\\");
+
+    if (lastSlash != string::npos) {
+
+        binPrepend = binPrepend.substr(0, lastSlash + 1);
+    }
+
+    else {
+
+        binPrepend = "";
+    }
+
     string outPath = "";
     string flag = "";
     if (argc == 4) {
@@ -488,6 +501,7 @@ void main (int argc, char *argv[]) {
     ofstream viewF, controllerF, apiF;
 
     if (outPath != "") {
+        
         viewF.open(outPath + "/index.html");
         controllerF.open(outPath + "/controller.js");
 
@@ -524,12 +538,13 @@ void main (int argc, char *argv[]) {
         cout << "Deploying API failed. Aborting compilation.\n";
         return;
     }
+    cout << "API deployed: " + apiLink;
 
     apiLink = apiLink.substr(12, apiLink.length() - 14);
 
-    ifstream utilF ("bin/util.js", std::ifstream::in);
-
+    ifstream utilF (binPrepend + "util.js", std::ifstream::in);
     if (utilF.is_open()) {
+
         std::stringstream utilBuffer;
         utilBuffer << utilF.rdbuf();
         
@@ -587,12 +602,6 @@ list<Component> buildComponents() {
         }
 
         else if (c == '}' && isComponentName) {
-            
-            while (app[appI] != ',' && appI < app.length()) {
-
-                appI ++;
-            }
-            appI ++;
 
             return l;
         }
@@ -631,7 +640,9 @@ list<Component> buildComponents() {
 
                 else if (isPropertyVal) {
 
-                    props[trim(propertyName)] = trim(propertyVal);
+                    propertyVal = trim(propertyVal);
+
+                    props[trim(propertyName)] = propertyVal;
                     propertyName = "";
                     propertyVal = "";
                 }
@@ -679,6 +690,13 @@ list<Component> buildComponents() {
             if (trim(propertyName) == "children") {
                 
                 children = buildComponents();
+            
+                while (app[appI] != ',' && appI < app.length()) {
+
+                    if (app[appI] == ']') brackets.pop();
+                    appI ++;
+                }
+                appI ++;
 
                 Component newComponent;
                 
@@ -712,9 +730,16 @@ list<Component> buildComponents() {
 
             else if (isPropertyVal && brackets.size() == 1) {
 
-                props[trim(propertyName)] = trim(propertyVal);
+                propertyVal = trim(propertyVal);
+
+                props[trim(propertyName)] = propertyVal;
                 propertyName = "";
                 propertyVal = "";
+            }
+
+            else if (isPropertyVal) {
+
+                propertyVal += c;
             }
 
             isPropertyName = true;
@@ -751,6 +776,7 @@ list<Component> buildViewAndFunctions(list<Component> tree) {
 
         view += "<" + it->getName() + "\n";
 
+        //add some arbitrary id if not set
         if (it->getProps()["id"] == "") {
             
             it->setProp("id", "\"anon" + to_string(anonIncrement) + "\"");
@@ -768,18 +794,27 @@ list<Component> buildViewAndFunctions(list<Component> tree) {
 
                     view += prop.first + "=" + prop.second + "\n";
                 }
+
+                //check if an image source
+                else if (it->getName() == "img" && prop.first == "src") {
+                    
+                    Function newFunc;
+                    newFunc.setHeader("set" + it->getProps()["id"].substr(1, it->getProps()["id"].length() - 2) + prop.first);
+                    newFunc.setBody("BaseEncode[ExportByteArray[" + prop.second + ", \"JPG\"]]");
+                    functions.push_back(newFunc);
+
+                    view += prop.first + "=" + "\"\"\n";
+                }
                 
                 else {
 
-                    if (it->getProps()["id"] != "") {
+                    //at this point id is already set
+                    Function newFunc;
+                    newFunc.setHeader("set" + it->getProps()["id"].substr(1, it->getProps()["id"].length() - 2) + prop.first);
+                    newFunc.setBody(prop.second + "\n");
+                    functions.push_back(newFunc);
 
-                        Function newFunc;
-                        newFunc.setHeader("set" + it->getProps()["id"] + prop.first);
-                        newFunc.setBody(prop.second + "\n");
-                        functions.push_back(newFunc);
-
-                        view += prop.first + "=" + "\"\"\n";
-                    }
+                    view += prop.first + "=" + "\"\"\n";
                 }
             }
         }
@@ -850,9 +885,20 @@ void buildController(list<Component> tree) {
 
                     if (c.getProps()["id"] != "") {
 
-                        controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + prop.first + ", function(res) {\n"
-                        + "document.getElementById(\"" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + "\".textContent = res" + "\n"
-                        + "});\n";
+                        //check if image src
+                        if (c.getName() == "img" && prop.first == "src") {
+                            
+                            controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + prop.first + "\', function(res) {\n"
+                            + "document.getElementById(\"" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + "\")." + prop.first + " = \"data:image/png;base64,\" + res.substring(1, res.length - 1);\n"
+                            + "});\n";
+                        }
+
+                        else {
+
+                            controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + prop.first + "\', function(res) {\n"
+                            + "document.getElementById(\"" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + "\")." + prop.first + " = res\n"
+                            + "});\n";
+                        }
                     }
                 }
             }

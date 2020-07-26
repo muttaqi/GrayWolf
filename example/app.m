@@ -28,6 +28,10 @@ App[{
                         text[]
                     ]
                 }
+            ],
+            img[
+                id -> "image",
+                src -> Graphics[Circle[]]
             ]
         }
     ]
