@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <stdexcept>
 #include <sstream>
+#include "dist/json/json.h"
+#include "dist/jsoncpp.cpp"
 using namespace std;
 
 const std::string WHITESPACE = " \n\r\t\f\v";
@@ -48,6 +50,16 @@ class Function {
     }
 };
 
+bool isWolfram(string s) {
+
+    if (s.length() <= 13) {
+
+        return 0;
+    }
+
+    return s.substr(0, 13) == "(* WOLFRAM *)";
+}
+
 class Component {
 
     private:
@@ -58,6 +70,37 @@ class Component {
     string text = "";
 
     public:
+
+    void buildFromJSON(Json::Value tree) {
+
+        for (auto rule = tree.begin(); rule != tree.end(); ++rule) {
+
+            if (rule.key().asString() == "textContent") {
+                
+                text = (*rule).asString();
+            }
+
+            else if (rule.key().asString() == "name") {
+                
+                name = (*rule).asString();
+            }
+
+            else if (rule.key().asString() == "children") {
+
+                for (int i = 0; i < (*rule).size(); i ++) {
+
+                    Component newC;
+                    newC.buildFromJSON((*rule)[i]);
+                    children.push_back(newC);
+                }
+            }
+
+            else {
+                
+                props[rule.key().asString()] = (*rule).asString();
+            }
+        }
+    }
 
     void addProp(string name, string val) {
 
@@ -253,6 +296,23 @@ string exec(string command) {
    return result;
 }
 
+int findAppI(string s) {
+
+    int i = 0;
+    int out = 0;
+    while(i < s.length() - 4) {
+        
+        if (s.substr(i, 4) == "App[") {
+
+            out = i;
+        }
+
+        i++;
+    }
+
+    return out;
+}
+
 list<Component> buildComponents();
 list<Component> buildViewAndFunctions(list<Component> tree);
 void buildAPI();
@@ -314,183 +374,56 @@ void main (int argc, char *argv[]) {
 
         outPath = argv[3];
     }
-
-    char in, next;
-    string acc = "";
-    stack<char> brackets;
-    bool isComment = false, 
-        isString = false, 
-        isFunctionBody = false, 
-        isApp = false,
-        isComponent = false;
-    string functionHeader = "";
-
-    string currentProp, currentComponent;
     
-    ifstream src (argv[1]);
-    
-    if (src.is_open()) {
+    string src = argv[1];
+    string app = exec(
+        "cat " + src
+    );
 
-        while(src.get(in)) {
+    int appI = findAppI(app);
 
-            //otherwise handle functions
-            if (!isComment && !isString && in == '(' && src.peek() == '*') {
+    if (appI != string::npos) {
 
-                src.get(in);
-                isComment = true;
-                continue;
-            }
-
-            if (isComment && in == '*' && src.peek() == ')') {
-
-                src.get(in);
-                isComment = false;
-                continue;
-            }
-
-            if (isComment) {
-
-                continue;
-            }
-
-            if (in == '\"') {
-                
-                if (isApp) {
-                    
-                    app += in;
-                }
-
-                else {
-
-                    acc += in;
-                }
-
-                isString = !isString;
-                continue;
-            }
-
-            if (isString) {
-
-                if (isApp) {
-
-                    app += in;
-                }
-
-                else {
-
-                    acc += in;
-                }
-                continue;
-            }
-
-            //check if app started
-            if (!isApp) {
-
-                string tempAcc = acc;
-                tempAcc += in;
-                int l = tempAcc.length();
-
-                if (
-                    (!isComment && !isString && l >= 5 && tempAcc.substr(l - 4, 4) == "App[" && isspace(tempAcc.at(l - 5))) ||
-                    (tempAcc == "App[")
-                ) {
-
-                    isApp = true;
-                    brackets.push('[');
-                    acc = "";
-                    continue;
-                }
-            }
-
-            //load in app
-            if (isApp) {
-
-                if (in == ']') {
-
-                    brackets.pop();
-                    if (brackets.size() == 0) {
-
-                        isApp = false;
-                    }
-
-                    else {
-                        
-                        app += in;
-                    }
-                    continue;
-                }
-
-                else if (in == '[') {
-
-                    brackets.push('[');
-                    app += in;
-                    continue;
-                }
-
-                else {
-
-                    app += in;
-                    continue;
-                }
-            }
-
-            if (in == ':' && src.peek() == '=') {
-                
-                if (acc.find_first_of('[') != string::npos && acc.find_first_of(']') != string::npos) {
-
-                    src.get(in);
-
-                    functionHeader = acc;
-                    isFunctionBody = true;
-                    acc = "";
-                    continue;
-                }
-
-                acc += in;
-                continue;
-            }
-
-            if ((in == ';' || in == '\n') && brackets.size() == 0) {
-
-                if (isFunctionBody) {
-
-                    acc += in;
-                    apiFuncsAndVars += functionHeader + " := " + acc;
-                    functionHeader = "";
-
-                    isFunctionBody = false;
-                }
-
-                else {
-
-                    acc += in;
-                    apiFuncsAndVars += acc;
-                }
-                acc = "";
-                continue;
-            }
-
-            if (isOpening(in)) {
-
-                acc += in;
-                brackets.push(in);
-                continue;
-            }
-
-            if (isClosing(in) && brackets.top() == flip(in)) {
-
-                acc += in;
-                brackets.pop();
-                continue;
-            }
-            
-            acc += in;
-        }
+        app = app.substr(0, appI) + "Print[\n" + app.substr(appI, app.length()) + "\n]";
     }
 
-    src.close();
+    apiFuncsAndVars += app.substr(0, appI);
 
-    list<Component> tree = buildComponents();
+    ofstream appScript;
+
+    appScript.open("app.wl");
+    appScript << app;
+    appScript.close();
+
+    string json = exec(
+        "wolframscript -file app.wl"
+    );
+
+    Json::Value root;
+    Json::Reader reader;
+
+    bool parsingSuccess = reader.parse(json.c_str(), root);
+    if (!parsingSuccess) {
+
+        cout << "Failed" << reader.getFormatedErrorMessages();
+        return;
+    }
+
+    list<Component> tree;
+
+    Json::Value jsonTree = root.get("app", "DNE");
+    
+    for (int i = 0; i < jsonTree.size(); i ++) {
+
+        Component newC;
+        newC.buildFromJSON(jsonTree[i]);
+        cout << "413" + newC.toString() << "\n";
+        tree.push_back(newC);
+    }
+
+    exec(
+        "rm app.wl"
+    );
 
     //adds to global view and functions variables
     tree = buildViewAndFunctions(tree);
@@ -545,6 +478,8 @@ void main (int argc, char *argv[]) {
     ifstream utilF (binPrepend + "util.js", std::ifstream::in);
     if (utilF.is_open()) {
 
+        cout << binPrepend << "util.js" << "\n";
+
         std::stringstream utilBuffer;
         utilBuffer << utilF.rdbuf();
         
@@ -561,213 +496,6 @@ void main (int argc, char *argv[]) {
     controllerF.close();
 }
 
-list<Component> buildComponents() {
-
-    list<Component> l;
-
-    unordered_map<string, string> props;
-    list<Component> children;
-    string componentName = "";
-    string componentText = "";
-
-    string propertyName = "";
-    string propertyVal = "";
-
-    bool isPropertyName = false;
-    bool isPropertyVal = false;
-    bool isComponentName = false;
-    bool isComment = false;
-    stack<char> brackets;
-
-    while(appI < app.size()) {
-
-        char c = app[appI];
-
-        if (c == '{') {
-
-            if (isPropertyName) {
-
-                propertyName += c;
-            }
-
-            else if (isPropertyVal) {
-
-                propertyVal += c;
-            }
-
-            else {
-
-                isComponentName = true;
-            }
-        }
-
-        else if (c == '}' && isComponentName) {
-
-            return l;
-        }
-
-        else if (c == '[') {
-
-            if (isComponentName) {
-
-                isPropertyName = true;
-                isPropertyVal = false;
-                isComponentName = false;
-            }
-
-            else if (isPropertyName) {
-
-                propertyName += c;
-            }
-
-            else if (isPropertyVal) {
-
-                propertyVal += c;
-            }
-
-            brackets.push('[');
-        }
-
-        else if (c == ']') {
-
-            if (brackets.size() == 1) {
-
-                if (isPropertyName) {
-
-                    componentText = trim(propertyName);
-                    propertyName = "";
-                }
-
-                else if (isPropertyVal) {
-
-                    propertyVal = trim(propertyVal);
-
-                    props[trim(propertyName)] = propertyVal;
-                    propertyName = "";
-                    propertyVal = "";
-                }
-
-                Component newComponent;
-                
-                newComponent.setProps(props);
-                newComponent.setName(trim(componentName));
-                newComponent.setChildren(children);
-                newComponent.setText(trim(componentText));
-
-                l.push_back(newComponent);
-
-                props.clear();
-                componentName = "";
-                componentText = "";
-                propertyName = "";
-                propertyVal = "";
-                children.clear();
-
-                isComponentName = true;
-                isPropertyName = false;
-                isPropertyVal = false;
-            }
-
-            else if (isPropertyName) {
-
-                propertyName += c;
-            }
-
-            else if (isPropertyVal) {
-
-                propertyVal += c;
-            }
-            brackets.pop();
-        }
-
-        else if (c == '-' && app.length() >= appI + 2 && app[appI + 1] == '>') {
-
-            appI ++;
-            isPropertyVal = true;
-            isPropertyName = false;
-            isComponentName = false;
-
-            if (trim(propertyName) == "children") {
-                
-                children = buildComponents();
-            
-                while (app[appI] != ',' && appI < app.length()) {
-
-                    if (app[appI] == ']') brackets.pop();
-                    appI ++;
-                }
-                appI ++;
-
-                Component newComponent;
-                
-                newComponent.setProps(props);
-                newComponent.setName(trim(componentName));
-                newComponent.setChildren(children);
-                newComponent.setText(trim(componentText));
-
-                l.push_back(newComponent);
-
-                props.clear();
-                componentName = "";
-                componentText = "";
-                propertyName = "";
-                propertyVal = "";
-                children.clear();
-
-                isComponentName = true;
-                isPropertyName = false;
-                isPropertyVal = false;
-            }
-        }
-
-        else if (c == ',') {
-
-            if (isPropertyName && brackets.size() == 1) {
-
-                componentText = trim(propertyName);
-                propertyName = "";
-            }
-
-            else if (isPropertyVal && brackets.size() == 1) {
-
-                propertyVal = trim(propertyVal);
-
-                props[trim(propertyName)] = propertyVal;
-                propertyName = "";
-                propertyVal = "";
-            }
-
-            else if (isPropertyVal) {
-
-                propertyVal += c;
-            }
-
-            isPropertyName = true;
-            isPropertyVal = false;
-            isComponentName = false;
-        }
-
-        else if (isComponentName) {
-
-            componentName += c;
-        }
-
-        else if (isPropertyName) {
-
-            propertyName += c;
-        }
-
-        else if (isPropertyVal) {
-
-            propertyVal += c;
-        }
-
-        appI ++;
-    }
-
-    return l;
-}
-
 list<Component> buildViewAndFunctions(list<Component> tree) {
 
     list<Component> newTree;
@@ -779,7 +507,7 @@ list<Component> buildViewAndFunctions(list<Component> tree) {
         //add some arbitrary id if not set
         if (it->getProps()["id"] == "") {
             
-            it->setProp("id", "\"anon" + to_string(anonIncrement) + "\"");
+            it->setProp("id", "anon" + to_string(anonIncrement));
             anonIncrement++;
         }
         
@@ -790,17 +518,17 @@ list<Component> buildViewAndFunctions(list<Component> tree) {
             if (prop.first != "id") {
             
                 //check if just a string val
-                if (charCount(prop.second, '\"') == 2 && prop.second.find_first_of('\"') == 0 && prop.second.find_last_of('\"') == prop.second.length() - 1) {
+                if (!isWolfram(prop.second)) {
 
-                    view += prop.first + "=" + prop.second + "\n";
+                    view += prop.first + "=\"" + prop.second + "\"\n";
                 }
 
                 //check if an image source
                 else if (it->getName() == "img" && prop.first == "src") {
                     
                     Function newFunc;
-                    newFunc.setHeader("set" + it->getProps()["id"].substr(1, it->getProps()["id"].length() - 2) + prop.first);
-                    newFunc.setBody("BaseEncode[ExportByteArray[" + prop.second + ", \"JPG\"]]");
+                    newFunc.setHeader("set" + it->getProps()["id"] + prop.first);
+                    newFunc.setBody("BaseEncode[ExportByteArray[" + prop.second.substr(14, prop.second.length()) + ", \"JPG\"]]");
                     functions.push_back(newFunc);
 
                     view += prop.first + "=" + "\"\"\n";
@@ -810,8 +538,8 @@ list<Component> buildViewAndFunctions(list<Component> tree) {
 
                     //at this point id is already set
                     Function newFunc;
-                    newFunc.setHeader("set" + it->getProps()["id"].substr(1, it->getProps()["id"].length() - 2) + prop.first);
-                    newFunc.setBody(prop.second + "\n");
+                    newFunc.setHeader("set" + it->getProps()["id"] + prop.first);
+                    newFunc.setBody(prop.second.substr(14, prop.second.length()) + "\n");
                     functions.push_back(newFunc);
 
                     view += prop.first + "=" + "\"\"\n";
@@ -822,9 +550,9 @@ list<Component> buildViewAndFunctions(list<Component> tree) {
         view += ">\n";
 
         //same as above but for text
-        if (charCount(it->getText(), '\"') == 2 && it->getText().find_first_of('\"') == 0 && it->getText().find_last_of('\"') == it->getText().length() - 1) {
+        if (!isWolfram(it->getText())) {
 
-            view += it->getText().substr(1, it->getText().length() - 2) + "\n";
+            view += it->getText() + "\n";
         }
         
         else if (it->getText() != "") {
@@ -832,7 +560,7 @@ list<Component> buildViewAndFunctions(list<Component> tree) {
             if (it->getProps()["id"] != "") {
 
                 Function newFunc;
-                newFunc.setHeader("set" + it->getProps()["id"].substr(1, it->getProps()["id"].length() - 2) + "Text");
+                newFunc.setHeader("set" + it->getProps()["id"] + "Text");
                 newFunc.setBody(it->getText() + "\n");
                 functions.push_back(newFunc);
             }
@@ -879,24 +607,22 @@ void buildController(list<Component> tree) {
             if (prop.first != "id") {
             
                 //check if just a string val
-                if (!(
-                    charCount(prop.second, '\"') == 2 && prop.second.find_first_of('\"') == 0 && prop.second.find_last_of('\"') == prop.second.length() - 1
-                )) {
+                if (isWolfram(prop.second)) {
 
                     if (c.getProps()["id"] != "") {
 
                         //check if image src
                         if (c.getName() == "img" && prop.first == "src") {
                             
-                            controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + prop.first + "\', function(res) {\n"
-                            + "document.getElementById(\"" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + "\")." + prop.first + " = \"data:image/png;base64,\" + res.substring(1, res.length - 1);\n"
+                            controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"] + prop.first + "\', function(res) {\n"
+                            + "document.getElementById(\"" + c.getProps()["id"] + "\")." + prop.first + " = \"data:image/png;base64,\" + res.substring(1, res.length - 1);\n"
                             + "});\n";
                         }
 
                         else {
 
-                            controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + prop.first + "\', function(res) {\n"
-                            + "document.getElementById(\"" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + "\")." + prop.first + " = res\n"
+                            controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"] + prop.first + "\', function(res) {\n"
+                            + "document.getElementById(\"" + c.getProps()["id"] + "\")." + prop.first + " = res\n"
                             + "});\n";
                         }
                     }
@@ -905,16 +631,12 @@ void buildController(list<Component> tree) {
         }
 
         //same as above but for text
-        if (!(
-            charCount(c.getText(), '\"') == 2 && c.getText().find_first_of('\"') == 0 && c.getText().find_last_of('\"') == c.getText().length() - 1
-            ) 
-            && c.getText() != ""
-        ) {
+        if (isWolfram(c.getText()) && c.getText() != "") {
 
             if (c.getProps()["id"] != "") {
 
-                controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + "Text\', function(res) {\n"
-                + "document.getElementById(\"" + c.getProps()["id"].substr(1, c.getProps()["id"].length() - 2) + "\").textContent = res;\n"
+                controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"] + "Text\', function(res) {\n"
+                + "document.getElementById(\"" + c.getProps()["id"] + "\").textContent = res;\n"
                 + "});\n";
             }
         }

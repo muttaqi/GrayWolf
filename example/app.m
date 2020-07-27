@@ -1,12 +1,17 @@
 (* ::Package:: *)
 
+SetDirectory["C:/Users/12265/GrayWolf/src"];
+Import["./GrayWolf.m"];
+ 
 var = "Hello world ";
 
-text[] := (
+generateText[] := (
 
     s = "from the Wolfram Cloud!";
     var <> s
 )
+
+generateImage[] := Graphics[Circle[]];
 
 App[{
 
@@ -21,17 +26,17 @@ App[{
     body[
         children -> {
             a[
-                "Welcome to GrayWolf",
+                textContent -> "Welcome to GrayWolf",
                 id -> "aId",
                 children -> {
                     p[
-                        text[]
+                        textContent :> generateText[]
                     ]
                 }
             ],
             img[
                 id -> "image",
-                src -> Graphics[Circle[]]
+                src :> generateImage[]
             ]
         }
     ]
