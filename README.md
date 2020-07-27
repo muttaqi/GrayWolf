@@ -10,6 +10,8 @@ Simply clone the repository, and use the bin folder for the needed commands
 git clone https://github.com/muttaqi/GrayWolf.git
 ```
 
+JsonCPP is required as well. A Windows x64 distribution is provided in the src folder. Please see [the JsonCPP repository](https://github.com/open-source-parsers/jsoncpp) for details on building for other systems.
+
 ## Usage
 
 In your notebook/editor:
