@@ -45,11 +45,7 @@ GrayWolf lets you:
 ## Restrictions
 
 There are a few restrictions to be followed for the compiler to work:
-* Children must be the last member of a component's association list
-* String based properties only
-* No '(*', '*)', '[', ']', or '->' can be present in a string in the app tree
 * Only atomic functions with no stateful parameters can be used, and only for components with ids (thus, no event properties yet)
-* No empty ids, or ids of the form 'anonX' where X is an integer
 * No function can be named ApiHandler
 
 I am working towards lifting most of these restrictions.
@@ -57,7 +53,6 @@ I am working towards lifting most of these restrictions.
 ## Future Plans
 
 Here are some features I am currently working on implementing:
-* More flexible parsing using Wolfram's JSON export function
 * API variable handling
 * Stateful views and variable binding
 * Secure APIs through authorization middleware
