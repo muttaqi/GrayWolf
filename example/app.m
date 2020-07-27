@@ -11,8 +11,6 @@ generateText[] := (
     var <> s
 )
 
-generateImage[] := Graphics[Circle[]];
-
 App[{
 
     head[
@@ -36,7 +34,7 @@ App[{
             ],
             img[
                 id -> "image",
-                src :> generateImage[]
+                src :> Graphics[Circle[]]
             ]
         }
     ]

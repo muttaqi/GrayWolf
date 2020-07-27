@@ -1,7 +1,7 @@
 (* ::Package:: *)
 
-SetDirectory["C:/Users/12265/GrayWolf/.reference"];
-Import["../src/GrayWolf.m"];
+SetDirectory["C:/Users/12265/GrayWolf/src"];
+Import["./GrayWolf.m"];
  
 var = "Hello world ";
 
@@ -11,10 +11,8 @@ generateText[] := (
     var <> s
 )
 
-generateImage[] := Graphics[Circle[]];
-
 setanon3Text[] := (* WOLFRAM *) generateText[];
-setimagesrc[] := BaseEncode[ExportByteArray[generateImage[], "JPG"]];
+setimagesrc[] := BaseEncode[ExportByteArray[Graphics[Circle[]], "JPG"]];
 APIHandler[func_] := Which[
 func == "setanon3Text", setanon3Text[],
 func == "setimagesrc", setimagesrc[]];

@@ -8,11 +8,13 @@ GenerateJSON[tag_]:=(
 	out = "{\n";
 				
 	Do[
+	(s=ToString[FullForm[r]];
+	delayed=StringDrop[StringSplit[s,", "][[2]],-1];
 		If[ToString[Head[r]]=="RuleDelayed",
-			out = out <> "\"" <> ToString[r[[1]]] <> "\": \"(* WOLFRAM *)" <> StringSplit[ToString[r], ":>"][[2]] <> "\",\n",
+			out = out <> "\"" <> ToString[r[[1]]] <> "\": \"(* WOLFRAM *) " <> delayed <> "\",\n",
 			If[ToString[r[[1]]]=="children",
 				out = out <> "\"children\": [\n" <> StringDrop[StringRiffle[r[[2]]], -2] <> "],\n", 
-				out = out <> "\"" <> ToString[r[[1]]] <> "\": \"" <> r[[2]] <> "\",\n"]],
+				out = out <> "\"" <> ToString[r[[1]]] <> "\": \"" <> r[[2]] <> "\",\n"]]),
 		{r, strip[tag]}
 	];
 	
