@@ -12,6 +12,14 @@ git clone https://github.com/muttaqi/GrayWolf.git
 
 ## Usage
 
+In your notebook/editor:
+
+```mathematica
+SetDirectory["PATH_TO_SRC/src"];
+Import["./GrayWolf.m"];
+```
+
+
 ```bash
 graywolf MyApp/app.m -o MyApp
 ```
