@@ -44,11 +44,9 @@ GrayWolf lets you:
 
 ## Restrictions
 
-There are a few restrictions to be followed for the compiler to work:
+There are a couple restrictions to be followed for the compiler to work:
 * Only atomic functions with no stateful parameters can be used, and only for components with ids (thus, no event properties yet)
 * No function can be named ApiHandler
-
-I am working towards lifting most of these restrictions.
 
 ## Future Plans
 
