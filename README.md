@@ -19,6 +19,7 @@ SetDirectory["PATH_TO_SRC/src"];
 Import["./GrayWolf.m"];
 ```
 
+Build your app, then compile your code:
 
 ```bash
 graywolf MyApp/app.m -o MyApp
