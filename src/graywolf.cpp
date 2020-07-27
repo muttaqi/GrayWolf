@@ -395,20 +395,15 @@ void main (int argc, char *argv[]) {
     appScript << app;
     appScript.close();
 
-    cout << "398\n";
-
     string json = exec(
         "wolframscript -file app.wl"
     );
-
-    cout << "404 " << json << " \n";
 
     Json::Value root;
     Json::Reader reader;
 
     bool parsingSuccess = reader.parse(json.c_str(), root);
 
-    cout << "409\n";
     if (!parsingSuccess) {
 
         cout << "Failed" << reader.getFormatedErrorMessages();
@@ -423,7 +418,6 @@ void main (int argc, char *argv[]) {
 
         Component newC;
         newC.buildFromJSON(jsonTree[i]);
-        cout << "413" + newC.toString() << "\n";
         tree.push_back(newC);
     }
 
