@@ -21,19 +21,6 @@ countArgs[f_[_OptionsPattern|Verbatim[Pattern][_,_OptionsPattern]]]:={0,0,1};
 
 countArgs[f_[]]:={0,0,0};
 
-Execute[i_]:=(
-v :=i+1;
-v
-)
-
-MatrixMultiply3x3[m1_,m2_] := (
-	ValueAt[i_,j_]:=(
-		m1[i, 1;;3] * m2[1 ;; 3, j]
-	)
-
-	Array[ValueAt, {3, 3}]
-)
-
 WolfrASM[f_] := (
 
 	args = (Symbol["A"<>ToString[#]])&/@Range[countArgs[f][[1]][[1]]];
