@@ -24,7 +24,6 @@ class Function {
     private:
 
     string header, body;
-    bool isForWolfrasm;
 
     public:
 
@@ -46,16 +45,6 @@ class Function {
     string getBody() {
 
         return body;
-    }
-
-    bool isForWolfrasm() {
-        
-        return isForWolfrasm;
-    }
-
-    void setIsForWolfrasm(bool b) {
-        
-        isForWolfrasm = b;
     }
 
     string toString() {
@@ -570,19 +559,17 @@ list<Component> buildViewAndFunctions(list<Component> tree) {
 
                     view += prop.first + "=" + "\"\"\n";
                 }
+                    
+                else if (prop.second.find("[") != string::npos && prop.second.substr(14, prop.second.find("[")) == toWolfrasm) {
+                    wolfrasmArgs = prop.second.substr(prop.second.find("[") + 1, prop.second.find("]"));
+                    wolfrasmID = it->getProps()["id"];
+                }
                 
                 else {
 
                     //at this point id is already set
                     Function newFunc;
                     newFunc.setHeader("set" + it->getProps()["id"] + prop.first);
-                    
-                    if (prop.second.find("[") != string::npos && prop.second.substr(14, prop.second.find("[")) == toWolfrasm) {
-                        newFunc.setIsForWolfrasm(true);
-                        wolfrasmArgs = prop.second.substr(prop.second.find("[") + 1, prop.second.find("]"));
-                        wolfrasmID = it->getProps()["id"];
-                    }
-
                     newFunc.setBody(prop.second.substr(14, prop.second.length()) + "\n");
                     functions.push_back(newFunc);
 
