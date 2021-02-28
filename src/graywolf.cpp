@@ -9,17 +9,22 @@
 #include <stdio.h>
 #include <stdexcept>
 #include <sstream>
+#include <algorithm>
 #include "dist/json/json.h"
 #include "dist/jsoncpp.cpp"
 using namespace std;
 
-const std::string WHITESPACE = " \n\r\t\f\v";
+const string WHITESPACE = " \n\r\t\f\v";
+string forWolfrasm = "";
+string wolfrasmArgs = "";
+string wolfrasmID = "";
 
 class Function {
 
     private:
 
     string header, body;
+    bool isForWolfrasm;
 
     public:
 
@@ -41,6 +46,16 @@ class Function {
     string getBody() {
 
         return body;
+    }
+
+    bool isForWolfrasm() {
+        
+        return isForWolfrasm;
+    }
+
+    void setIsForWolfrasm(bool b) {
+        
+        isForWolfrasm = b;
     }
 
     string toString() {
@@ -313,6 +328,23 @@ int findAppI(string s) {
     return out;
 }
 
+string findWolfrasm(string s) {
+
+    int i = 0;
+    string out = "";
+    while(i < s.length() - 9) {
+        
+        if (s.substr(i, 9) == "WolfrASM[") {
+            
+            return s.substr(i + 1, s.find("]", i));
+        }
+
+        i++;
+    }
+
+    return out;
+}
+
 list<Component> buildComponents();
 list<Component> buildViewAndFunctions(list<Component> tree);
 void buildAPI();
@@ -326,12 +358,12 @@ string::size_type appI = 0;
 
 /**
  * expected:
- * argc: 1
+ * argc: 2
  * argv: [src_file_path]
  **/
 void main (int argc, char *argv[]) {
 
-    if (argc > 4) {
+    if (argc > 2) {
 
         printf("Too many arguments provided. Please only provide a source .m file");
         return;
@@ -381,6 +413,7 @@ void main (int argc, char *argv[]) {
     );
 
     int appI = findAppI(app);
+    forWolfrasm = findWolfrasm(app);
 
     if (appI != string::npos) {
 
@@ -494,6 +527,10 @@ void main (int argc, char *argv[]) {
     controllerF << controller;
 
     controllerF.close();
+
+    if (forWolfrasm != "") {
+        generateWASM(binPrepend);
+    }
 }
 
 list<Component> buildViewAndFunctions(list<Component> tree) {
@@ -539,6 +576,13 @@ list<Component> buildViewAndFunctions(list<Component> tree) {
                     //at this point id is already set
                     Function newFunc;
                     newFunc.setHeader("set" + it->getProps()["id"] + prop.first);
+                    
+                    if (prop.second.find("[") != string::npos && prop.second.substr(14, prop.second.find("[")) == toWolfrasm) {
+                        newFunc.setIsForWolfrasm(true);
+                        wolfrasmArgs = prop.second.substr(prop.second.find("[") + 1, prop.second.find("]"));
+                        wolfrasmID = it->getProps()["id"];
+                    }
+
                     newFunc.setBody(prop.second.substr(14, prop.second.length()) + "\n");
                     functions.push_back(newFunc);
 
@@ -619,6 +663,15 @@ void buildController(list<Component> tree) {
                             + "});\n";
                         }
 
+                        //check if for WolfrASM
+                        else if (c.getProps["id"] == wolfrasmID) {
+                            
+                            string args = string(count(wolfrasmArgs.begin(), wolfrasmArgs.end(), ',') + 1, "\'number\', ");
+                            args = args.substr(0, args.length - 2);
+                            controller += "execute" + forWolfrasm + " = " + "cwrap(\'" + forWolfrasm + "\', \'number\', [" + args + "]);";
+                            controller += "execute" + forWolfrasm + "(" + wolfrasmArgs + ");" + "\n";
+                        }
+
                         else {
 
                             controller += "await httpGet(\'" + apiLink + "?funcName=set" + c.getProps()["id"] + prop.first + "\', function(res) {\n"
@@ -643,4 +696,17 @@ void buildController(list<Component> tree) {
 
         buildController(c.getChildren());
     }
+}
+
+void generateWASM(string binPrepend) {
+
+    string installDir = exec("./install_dir.wl");
+    installDir = installDir.substr(installDir.find("Out[") + 9, installDir.find("\n", installDir.find("Out[") + 9));
+    installDir = replace(installDir.begin(), installDir.end(), '\\', '/');
+    exec(
+        "emcc -o " + binPrepend + "index2.html --shell-file " + binPrepend + "index.html " + forWolfrasm + ".c -s \"EXPORTED_FUNCTIONS=['_" + forWolfrasm + "']\" -s \"EXPORTED_RUNTIME_METHODS=['ccall', 'cwrap']\" -I\"" + installDir + "SystemFiles/IncludeFiles/C\"";
+    );
+    exec(
+        "rm " + binPrepend + "index.html && mv " + binPrepend + "index2.html " + binPrepend + "index.html"
+    );
 }
