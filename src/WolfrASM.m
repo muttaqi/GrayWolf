@@ -50,8 +50,9 @@ WolfrASM[f_] := (
 	CopyFile["out.txt", cFile, OverwriteTarget->True];
 	ReadString[cFile];
 	Close["out.txt"];
-	s = "emcc \"" <> StringReplace[Directory[], "\\"->"/"] <> "/" <> ToString[cFile] <> "\" -o " <> StringReplace[Directory[], "\\"->"/"] <> "/function.html -s EXPORTED_FUNCTIONS='[\"_" <> ToString[f] <> "\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]' -I\""<>StringReplace[$InstallationDirectory, "\\"->"/"] <> "/SystemFiles/IncludeFiles/C\"";
-	s
+	s = "emcc " <> StringReplace[Directory[], "\\"->"/"] <> "/" <> ToString[cFile] <> " -o " <> StringReplace[Directory[], "\\"->"/"] <> "/function.html -s 'EXPORTED_FUNCTIONS=[\"_" <> ToString[f] <> "\"]' -s 'EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\"]' -I\""<>StringReplace[$InstallationDirectory, "\\"->"/"] <> "/SystemFiles/IncludeFiles/C\"";
+	Print[s]
+    Run[s]
 )
 
 (*WolfrASM[Execute]*)
