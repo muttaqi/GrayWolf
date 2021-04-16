@@ -1,6 +1,7 @@
 #!wolframscript
 
 Import["woops/woops.m"]
+Off[General::stop]
 
 Component := Class[
     <|
@@ -18,7 +19,7 @@ Component := Class[
                 
                 Do[
                     (
-                        out = out <> styleName <> ": " <> this["style"][styleName] <> "; ";
+                        out = out <> styleName <> ": " <> ToString[this["style"][styleName]] <> "; ";
                     ),
                     {
                         styleName,
@@ -29,12 +30,12 @@ Component := Class[
                 out = out <> "\" class=\"";
                 (
                     out = out <> # <> " ";
-                ) &/@ this["class"]
+                ) &/@ this["class"];
 
                 out = out <> "\">\n" <> this["text"] <> "\n";
                 (
                     out = out <> #["render", {}] <> "\n";
-                ) &/@ this["children"]
+                ) &/@ this["children"];
 
                 out = out <> "</" <> this["tag"] <> ">";
 
