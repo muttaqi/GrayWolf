@@ -1,5 +1,7 @@
 #!wolframscript
 
+CurrentDirectory = StringRiffle[Drop[StringSplit[ExpandFileName[First[$ScriptCommandLine]], "\\"], -1], "/"];
+
 RenderList[components_List] := (
     out := "";
     
@@ -7,6 +9,19 @@ RenderList[components_List] := (
         out = out <> "\n" <> #["render", {}];
     )&/@components;
     out
+)
+
+Inject[components_List] := (
+    If[
+        FileExistsQ[StringReplace[CurrentDirectory, "\\"->"/"] <> "/index.html"],
+        (
+            html := ReadString[File[StringReplace[CurrentDirectory, "\\"->"/"] <> "/index.html"]];
+            StringReplace[html, "{{ GRAYWOLF }}" -> RenderList[components]]
+        ),
+        (
+            RenderList[components]
+        )
+    ]
 )
 
 Graywolf[components_List] := (
@@ -17,7 +32,7 @@ Graywolf[components_List] := (
             client = assoc["SourceSocket"]
             },
             response = ExportString[
-            HTTPResponse[ RenderList[components], <|
+            HTTPResponse[ Inject[components], <|
                 "StatusCode" -> 200,
                 "ContentType" -> "text/html",
                 "Headers" -> { "Access-Control-Allow-Origin" -> origin }

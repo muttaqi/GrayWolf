@@ -1,7 +1,9 @@
 #!wolframscript
 
-Import["Component.m"]
-Import["Server.m"]
+GWDir := Environment["GW_DIR"]
+
+Import[GWDir <> "/Component.m"]
+Import[GWDir <> "/Server.m"]
 On[Assert]
 
 component = New[Component, <|"tag"-> "a", "text" -> "Hello World!"|>]
