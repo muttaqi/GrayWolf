@@ -1,30 +1,7 @@
 #!wolframscript
 
-CurrentDirectory = StringRiffle[Drop[StringSplit[ExpandFileName[First[$ScriptCommandLine]], "\\"], -1], "/"];
+Serve[file_] := (
 
-RenderList[components_List] := (
-    out := "";
-    
-    (
-        out = out <> "\n" <> #["render", {}];
-    )&/@components;
-    out
-)
-
-Inject[components_List] := (
-    If[
-        FileExistsQ[StringReplace[CurrentDirectory, "\\"->"/"] <> "/index.html"],
-        (
-            html := ReadString[File[StringReplace[CurrentDirectory, "\\"->"/"] <> "/index.html"]];
-            StringReplace[html, "{{ GRAYWOLF }}" -> RenderList[components]]
-        ),
-        (
-            RenderList[components]
-        )
-    ]
-)
-
-Graywolf[components_List] := (
     listener = SocketListen[
         58000,
         Function[{assoc},
@@ -32,7 +9,7 @@ Graywolf[components_List] := (
             client = assoc["SourceSocket"]
             },
             response = ExportString[
-            HTTPResponse[ Inject[components], <|
+            HTTPResponse[ ReadString[file], <|
                 "StatusCode" -> 200,
                 "ContentType" -> "text/html",
                 "Headers" -> { "Access-Control-Allow-Origin" -> origin }
@@ -51,11 +28,9 @@ Graywolf[components_List] := (
         |>
     ];
 
-    Print["Listening:  ", url, "\n"];
+    Print[url <> "\n"];
 
     task = ZeroMQLink`Private`$AsyncState["Task"];
     WaitAsynchronousTask[task];
     Print["Exiting..."];
-)
-
-Graywolf[component_] := Graywolf[{component}]
+);
