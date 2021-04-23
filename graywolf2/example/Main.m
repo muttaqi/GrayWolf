@@ -14,4 +14,6 @@ listComponent = New[Component, <|"tag"-> "ul", "class" -> {"test-class"}, "child
     New[Component, <|"tag"-> "li", "style" -> <|"margin" -> 4|>, "text" -> (i = i + 1; ToString[i])|>]
 }|>]
 
-Graywolf[{component, listComponent}]
+imgComponent = New[Img, <|"src"->Graphics[Circle[]], "style"-><|"width"->"200px", "height"->"auto"|>|>]
+
+Graywolf[{component, listComponent, imgComponent}]

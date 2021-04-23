@@ -44,3 +44,20 @@ Component := Class[
         ]
     |>
 ];
+
+Img := Extend[Component, 
+    <|
+        "tag"->"img",
+        "src"->None
+    |>,
+    <|
+        "render"->Function[
+            {this},
+            (
+                srcString = "data:image/png;base64,"<>BaseEncode[ExportByteArray[this["src"], "PNG"]];
+                superRender = this["_super"]["render", {}];
+                StringInsert[superRender, " src=\""<>srcString<>"\"", 5]
+            )
+        ]
+    |>
+]
