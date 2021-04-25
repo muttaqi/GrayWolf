@@ -3,11 +3,9 @@
 GWDir := Environment["GW_DIR"]
 CurrentDirectory = StringRiffle[Drop[StringSplit[ExpandFileName[First[$ScriptCommandLine]], "\\"], -1], "/"];
 
+Import[GWDir <> "/Component.m"]
 Import[GWDir <> "/Server.m"]
-
-PathJoin[names__] := (
-    StringReplace[FileNameJoin[List[names]], "\\"->"/"]
-);
+Import[GWDir <> "/Util.m"]
 
 RenderList[components_List] := (
     out := "";
@@ -34,16 +32,23 @@ Inject[components_List] := (
 
 Graywolf[components_List] := (
 
-    distPath = PathJoin[CurrentDirectory, "dist", "index.html"];
+    distIndexPath = PathJoin[CurrentDirectory, "dist", "index.html"];
     If[
-        Not[FileExistsQ[distPath]],
-        CreateFile[distPath]
+        Not[FileExistsQ[distIndexPath]],
+        CreateFile[distIndexPath]
     ];
-    dist = OpenWrite[distPath];
-    WriteString[dist, Inject[components]];
-    Close[dist];
+    distIndex = OpenWrite[distIndexPath];
+    WriteString[distIndex, Inject[components]];
+    Close[distIndex];
     
-    Serve[File[distPath]];
+    dist = PathJoin[CurrentDirectory, "dist"];
+    js = PathJoin[CurrentDirectory, "js"];
+    If[
+        FileExistsQ[js],
+        Run["cp -r "<>js<>" "<>dist]
+    ];
+    
+    Serve[dist];
 );
 
 Graywolf[component_] := Graywolf[{component}];

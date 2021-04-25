@@ -2,7 +2,6 @@
 
 GWDir := Environment["GW_DIR"]
 
-Import[GWDir <> "/Component.m"]
 Import[GWDir <> "/Graywolf.m"]
 
 component = New[Component, <|"tag"-> "a", "text" -> "Hello World!"|>]
@@ -16,4 +15,6 @@ listComponent = New[Component, <|"tag"-> "ul", "class" -> {"test-class"}, "child
 
 imgComponent = New[Img, <|"src"->Graphics[Circle[]], "style"-><|"width"->"200px", "height"->"auto"|>|>]
 
-Graywolf[{component, listComponent, imgComponent}]
+srcComponent = New[Script, <|"src"->"js/main.js"|>];
+
+Graywolf[{srcComponent, component, listComponent, imgComponent}]
