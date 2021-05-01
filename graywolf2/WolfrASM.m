@@ -1,6 +1,12 @@
 (* ::Package:: *)
 ClearAll["Global`*"]
 
+GWDir := Environment["GW_DIR"]
+
+Import[GWDir <> "/Util.m"]
+
+CurrentDirectory = StringRiffle[Drop[StringSplit[ExpandFileName[First[$ScriptCommandLine]], "\\"], -1], "/"];
+
 Needs["CCodeGenerator`"];
 Needs["CCompilerDriver`"];
 Needs["SymbolicC`"];
@@ -19,13 +25,14 @@ countArgs[f_[_OptionsPattern|Verbatim[Pattern][_,_OptionsPattern]]]:={0,0,1};
 
 countArgs[f_[]]:={0,0,0};
 
-WolfrASM[f_] := (
+GenerateC[f_] := (
+	Print[CurrentDirectory];
 
 	args = (Symbol["A"<>ToString[#]])&/@Range[countArgs[f][[1]][[1]]];
 	cForm = CForm[Apply[f,args]];
 
 	c=Compile[{args},f[args/.List->Squence]];
-	cFile = CCodeGenerate[c,ToString[f],{}];
+	cFile = CCodeGenerate[c, ToString[f], PathJoin[CurrentDirectory, "__wolfrasm__", ToString[f] <> ".c"]];
 
 	cCode = ReadString[cFile];
 	lines= StringSplit[cCode, "\n"];
@@ -42,14 +49,45 @@ WolfrASM[f_] := (
 	lines = Delete[lines, Position[lines, _?(StringContainsQ[ToString[#],ToString[f]<>".h"]&)][[1]][[1]]];
 	out = StringRiffle[lines, "\n"];
 
-	s = OpenWrite["out.txt"];
-	WriteString["out.txt",out];
-	ReadString["out.txt"];
-	CopyFile["out.txt", cFile, OverwriteTarget->True];
-	ReadString[cFile];
-	Close["out.txt"];
-	s = "emcc " <> StringReplace[Directory[], "\\"->"/"] <> "/" <> ToString[cFile] <> " -o " <> StringReplace[Directory[], "\\"->"/"] <> "/function.html -s 'EXPORTED_FUNCTIONS=[\"_" <> ToString[f] <> "\"]' -s 'EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\"]' -I\""<>StringReplace[$InstallationDirectory, "\\"->"/"] <> "/SystemFiles/IncludeFiles/C\"";
-	Print[s];
-	proc = StartProcess["bash"];
-	WriteLine[proc, s];
+	outFilePath = PathJoin[CurrentDirectory, "__wolfrasm__", "out.txt"];
+	OpenWrite[outFilePath];
+	WriteString[outFilePath, out];
+	CopyFile[outFilePath, cFile, OverwriteTarget->True];
+	Close[outFilePath];
+
+	cFile
+)
+
+GenerateWASM[] := (
+	If[
+		DirectoryQ[PathJoin[CurrentDirectory, "__wolfrasm__"]],
+		(
+			cFilesFolder = PathJoin[CurrentDirectory, "__wolfrasm__"];
+
+			cFiles = FileNames["*.c", cFilesFolder];
+			funcNames = (StringSplit[FileNameTake[#], ".c"][[1]]) &/@ cFiles;
+
+			wolfrasmFolder = PathJoin[CurrentDirectory, "wolfrasm"];
+			If[
+				Not[DirectoryQ[wolfrasmFolder]],
+				CreateDirectory[wolfrasmFolder]
+			];
+
+			s = "emcc " <> PathJoin[cFilesFolder, "*.c"] <> " -o " <> PathJoin[wolfrasmFolder, "wolfrasm.html"] <> " -s 'EXPORTED_FUNCTIONS=[\"_" <> StringRiffle[funcNames, "\",\"_"] <> "\"]' -s 'EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\"]' -I\""<>StringReplace[$InstallationDirectory, "\\"->"/"] <> "/SystemFiles/IncludeFiles/C\"";
+			Print[s];
+
+			proc = StartProcess["bash"];
+			WriteLine[proc, s<>"\n"];
+			WriteLine[proc, "rm -r " <> cFilesFolder <> "\n"];
+			While[
+				DirectoryQ[cFilesFolder],
+				Pause[1]
+			];
+		)
+	];
+)
+
+WolfrASM[f_] := (
+
+	cFile = GenerateC[f];
 )
