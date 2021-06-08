@@ -6,6 +6,7 @@ CurrentDirectory = StringRiffle[Drop[StringSplit[ExpandFileName[First[$ScriptCom
 Import[GWDir <> "/Component.m"]
 Import[GWDir <> "/Server.m"]
 Import[GWDir <> "/Util.m"]
+Import[GWDir <> "/WolfrASM.m"]
 
 RenderList[components_List] := (
     out := "";
@@ -17,12 +18,24 @@ RenderList[components_List] := (
 );
 
 Inject[components_List] := (
+
+    render = RenderList[components];
+
+    cCodePath = PathJoin[CurrentDirectory, "dist", "__wolfrasm__"];
+    If[
+        DirectoryQ[cCodePath],
+        (
+            render = "{{{ SCRIPT }}}\n" <> render;
+        )
+    ];
+
     indexPath = PathJoin[CurrentDirectory, "index.html"];
+
     If[
         FileExistsQ[indexPath],
         (
             html := ReadString[File[indexPath]];
-            StringReplace[html, "{{ GRAYWOLF }}" -> RenderList[components]]
+            StringReplace[html, "{{{ GRAYWOLF }}}" -> render]
         ),
         (
             RenderList[components]
@@ -40,6 +53,14 @@ Graywolf[components_List] := (
     distIndex = OpenWrite[distIndexPath];
     WriteString[distIndex, Inject[components]];
     Close[distIndex];
+
+    cCodePath = PathJoin[CurrentDirectory, "dist", "__wolfrasm__"];
+    If[
+        DirectoryQ[cCodePath],
+        (
+            GenerateWASM[];
+        )
+    ];
     
     dist = PathJoin[CurrentDirectory, "dist"];
     js = PathJoin[CurrentDirectory, "js"];
@@ -49,7 +70,7 @@ Graywolf[components_List] := (
     ];
     
     Serve[dist];
-);
+)
 
 Graywolf[component_] := Graywolf[{component}];
 
@@ -82,7 +103,7 @@ Controller[main_] := (
                     (
                         KillProcess[serverTuple["Process"]];
                         serverTuple = CompileAndServe[main];
-                        Print["Listening:  ", url, "\n"];
+                        Print["Listening:  ", serverTuple["URL"], "\n"];
                     )
                 ]
             ]

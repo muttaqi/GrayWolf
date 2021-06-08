@@ -1,6 +1,7 @@
 #!wolframscript
 
-Import["WolfrASM.m"]
+GWDir := Environment["GW_DIR"]
+Import[GWDir <> "/WolfrASM.m"]
 
 func[x_] := x + 1;
 

@@ -44,8 +44,6 @@ Serve[root_] := (
     ];
 
     Print[url <> "\n"];
-
-    task = ZeroMQLink`Private`$AsyncState["Task"];
-    WaitAsynchronousTask[task];
-    Print["Exiting..."];
+    
+    While[True]
 );
