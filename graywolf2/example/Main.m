@@ -4,7 +4,7 @@ GWDir := Environment["GW_DIR"]
 
 Import[GWDir <> "/Graywolf.m"]
 
-increment[i_] := i + 1;
+increment[i_] := i + 2;
 
 component = New[Component, <|"tag"-> "a", "text" -> "Hello World!"|>];
 

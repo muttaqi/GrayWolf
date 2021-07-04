@@ -36,5 +36,5 @@ initialize = 1;
 }
 
 DLLEXPORT mreal increment( mreal A1) {
-return 1 + A1;
+return 2 + A1;
 }

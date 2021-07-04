@@ -83,11 +83,6 @@ GenerateWASM[] := (
 			proc = StartProcess["bash"];
 			WriteLine[proc, s<>"\n"];
 			WriteLine[proc, "mv " <> PathJoin[distFolder, "wolfrasm.html"] <> " " <> indexPath];
-			
-			While[
-				DirectoryQ[cFilesFolder],
-				Pause[1]
-			];
 		)
 	];
 )
