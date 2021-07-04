@@ -20,14 +20,17 @@ Serve[root_] := (
                 responseString = ReadString[File[PathJoin[root, "index.html"]]],
                 responseString = ReadString[File[PathJoin[root, StringDrop[route, 1]]]]
             ];
-
+            
             response = ExportString[
             HTTPResponse[ responseString, <|
                 "StatusCode" -> 200,
-                "ContentType" -> "text/html",
+                "ContentType" -> If[
+                    ((StringLength[route] > 4) && (StringTake[route, -4] == "wasm")),
+                    "application/wasm",
+                    "text/html"
+                ],
                 "Headers" -> { "Access-Control-Allow-Origin" -> origin }
             |>], "HTTPResponse"];
-
 
             WriteString[client, response];
             Close[client]

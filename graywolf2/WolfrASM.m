@@ -80,12 +80,10 @@ GenerateWASM[] := (
 			"/SystemFiles/IncludeFiles/C\" --shell-file " <> 
 			PathJoin[distFolder, "index.html"];
 
-			Print[s];
-
 			proc = StartProcess["bash"];
 			WriteLine[proc, s<>"\n"];
 			WriteLine[proc, "mv " <> PathJoin[distFolder, "wolfrasm.html"] <> " " <> indexPath];
-			(*WriteLine[proc, "rm -r " <> cFilesFolder <> "\n"];*)
+			
 			While[
 				DirectoryQ[cFilesFolder],
 				Pause[1]
