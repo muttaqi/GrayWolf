@@ -37,7 +37,7 @@ Import[GWDir <> "/Graywolf.m"]
 To serve your app, use the following CLI command
 
 ```bash
-Graywolf.m [folder]
+Graywolf.m /path/to/project
 ```
 See the example folder for an example project structure. The default port is localhost:58000.
 
