@@ -26,6 +26,14 @@ Also add Graywolf.m to your path variables.
 
 ## Usage
 
+Load the GW_DIR environment variable and Graywolf.m into your Main.m Wolfram file
+
+```mathematica
+GWDir := Environment["GW_DIR"]
+
+Import[GWDir <> "/Graywolf.m"]
+```
+
 ```bash
 Graywolf.m [folder]
 ```
