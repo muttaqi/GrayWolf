@@ -4,13 +4,19 @@ Graywolf is a lightweight web application framework for the Wolfram language.
 
 ## Installation
 
-Instasll Wolfram Mathematica and Wolframscript. Then clone the repository
+Install Wolfram Mathematica and Wolframscript. Then clone the repository
 
 ```bash
 git clone https://github.com/muttaqi/GrayWolf.git
 ```
 
-Add the path to Graywolf.m as an environment variable called GW_DIR
+Bash into the graywolf folder and run requirements.sh
+
+```bash
+./requirements.sh
+```
+
+Finally, add the path to Graywolf.m as an environment variable called GW_DIR
 
 ```bash
 export GW_DIR=/path/to/Graywolf.m
