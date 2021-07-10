@@ -34,6 +34,8 @@ GWDir := Environment["GW_DIR"]
 Import[GWDir <> "/Graywolf.m"]
 ```
 
+To serve your app, use the following CLI command
+
 ```bash
 Graywolf.m [folder]
 ```
