@@ -3,6 +3,9 @@
 Import["woops/woops.m"]
 Off[General::stop]
 
+(* see github.com/muttaqi/woops for documentation on object oriented syntax used *)
+
+(* component class *)
 Component := Class[
     <|
         "tag" -> "",
@@ -12,11 +15,13 @@ Component := Class[
         "children" -> {}
     |>,
     <|
+        (* renders a component into html format *)
         "render" -> Function[
             {this},
             (
                 out = "<" <> this["tag"] <> " ";
                 
+                (* format style association as CSS format *)
                 If[Length[Keys[this["style"]]] > 0, (
                         out = out <> "style=\"";
                         
@@ -33,6 +38,7 @@ Component := Class[
                     )
                 ];
 
+                (* format class list as space-divided output *)
                 If[Not[this["class"] == ""], (
                     out = out <> "class=\"";
                     (
@@ -42,11 +48,13 @@ Component := Class[
                     out = out <> "\" ";
                 )];
 
+                (* text content *)
                 out = out <> ">\n" <> this["text"] <> "\n";
                 (
                     out = out <> #["render", {}] <> "\n";
                 ) &/@ this["children"];
 
+                (* close tag and return *)
                 out = out <> "</" <> this["tag"] <> ">";
 
                 out
@@ -55,6 +63,7 @@ Component := Class[
     |>
 ];
 
+(* img is a component with a pre-determined tag, and an additional src field *)
 Img := Extend[Component, 
     <|
         "tag"->"img",
@@ -64,14 +73,18 @@ Img := Extend[Component,
         "render"->Function[
             {this},
             (
+                (* get image data in base64 *)
                 srcString = "data:image/png;base64,"<>BaseEncode[ExportByteArray[this["src"], "PNG"]];
+                (* call component render *)
                 superRender = this["_super"]["render", {}];
+                (* insert base64 data *)
                 StringInsert[superRender, " src=\""<>srcString<>"\"", 5]
             )
         ]
     |>
 ]
 
+(* script is a component with a pre-determined tag, and an additional src field *)
 Script := Extend[Component,
     <|
         "tag"->"script",
@@ -81,6 +94,7 @@ Script := Extend[Component,
         "render"->Function[
             {this},
             (
+                (* render as a component and insert src file attribute *)
                 superRender = this["_super"]["render", {}];
                 StringInsert[superRender, " src=\""<>this["src"]<>"\"", 8]
             )

@@ -34,15 +34,21 @@ GWDir := Environment["GW_DIR"]
 Import[GWDir <> "/Graywolf.m"]
 ```
 
+Build your components and then execute the Graywolf function
+
+```mathematica
+Graywolf[{component1, component2, ...}]
+```
+
 To serve your app, use the following CLI command
 
 ```bash
 Graywolf.m /path/to/project
 ```
-See the example folder for an example project structure. The default port is localhost:58000.
+See the example folder for an example project structure and code. The default port is localhost:58000.
 
 ## Future Plans
 
 * Client-side statefulness
-* URL parameter handling
+* Routes and URL parameter handling
 * Database model interface
