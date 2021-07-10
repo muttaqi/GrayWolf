@@ -4,56 +4,29 @@ Graywolf is a lightweight web application framework for the Wolfram language.
 
 ## Installation
 
-Simply clone the repository, and use the bin folder for the needed commands
+Instasll Wolfram Mathematica and Wolframscript. Then clone the repository
 
 ```bash
 git clone https://github.com/muttaqi/GrayWolf.git
 ```
 
-JsonCPP is required as well. A Windows x64 distribution is provided in the src folder. Please see [the JsonCPP repository](https://github.com/open-source-parsers/jsoncpp) for details on building for other systems.
+Add the path to Graywolf.m as an environment variable called GW_DIR
+
+```bash
+export GW_DIR=/path/to/Graywolf.m
+```
+
+Also add Graywolf.m to your path variables.
 
 ## Usage
 
-In your notebook/editor:
-
-```mathematica
-SetDirectory["PATH_TO_SRC/src"];
-Import["./GrayWolf.m"];
-```
-
-Build your app, then compile your code:
-
 ```bash
-graywolf MyApp/app.m -o MyApp
+Graywolf.m [folder]
 ```
-
-An example app can be found under the 'example' folder.
-
-## Why use GrayWolf?
-
-GrayWolf lets you:
-* Build complex views through a powerful templating engine
-* Serve views through your choice of server, or none at all
-* Generate optimized server request code for your controller
-* Compile Wolfram code with a simple and instant CLI
-* Build progressive web apps with high performance
-* Leverage Wolfram's knowledge base for visuals
-* Use Wolfram's powerful notebook IDE to develop code
- 
-## Architecture
-
-![GrayWolf Architecure](/images/architecture.png)
-
-## Restrictions
-
-There are a couple restrictions to be followed for the compiler to work:
-* Only atomic functions with no stateful parameters can be used, and only for components with ids (thus, no event properties yet)
-* No function can be named ApiHandler
+See the example folder for an example project structure. The default port is localhost:58000.
 
 ## Future Plans
 
-Here are some features I am currently working on implementing:
-* API variable handling
-* Stateful views and variable binding
-* Secure APIs through authorization middleware
-* Model interface for cloud databases
+* Client-side statefulness
+* URL parameter handling
+* Database model interface

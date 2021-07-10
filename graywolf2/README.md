@@ -1,1 +1,0 @@
-Usage: ./Graywolf.m [folder]

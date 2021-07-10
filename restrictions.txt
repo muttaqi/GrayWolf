@@ -1,6 +1,0 @@
-children must be the last member of a component's association list
-string based properties only
-no '(*', '*)', '[', ']', or '->' can be present in a string in the app tree
-only atomic functions with no stateful parameters can be used, and only for components with ids (thus, no event properties yet)
-no empty ids, or ids of the form 'AnonX' where X is an integer
-no function called ApiHandler
