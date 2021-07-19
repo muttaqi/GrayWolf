@@ -101,3 +101,34 @@ Script := Extend[Component,
         ]
     |>
 ]
+
+(* embed is a component that renders to a static string computed by wolfram *)
+Embed := Extend[Component,
+    <|
+        "object"->Nothing
+    |>,
+    <|
+        "render"->Function[
+            {this},
+            (
+                EmbedCode[this["object"]]["CodeSection"]["Content"]
+            )
+        ]
+    |>
+]
+
+BRType := Extend[Component,
+    <|
+        "tag"->"iframe"
+    |>,
+    <|
+        "render"->Function[
+            {},
+            (
+                "<br>"
+            )
+        ]
+    |>
+]
+
+BR = New[BRType];
