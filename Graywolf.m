@@ -81,6 +81,12 @@ Graywolf[components_List] := (
         FileExistsQ[js],
         Run["cp -r "<>js<>" "<>dist]
     ];
+
+    favicon = PathJoin[CurrentDirectory, "favicon.ico"];
+    If[
+        FileExistsQ[favicon],
+        Run["cp -r "<>favicon<>" "<>dist]
+    ];
     
     (* serve the compiled template *)
     Serve[dist];

@@ -22,17 +22,25 @@ Serve[root_] := (
                 responseString = ReadString[File[PathJoin[root, "index.html"]]],
                 responseString = ReadString[File[PathJoin[root, StringDrop[route, 1]]]]
             ];
-            
+
+            contentType = "text/html";
+
+            If[
+                ((StringLength[route] > 4) && (StringTake[route, -4] == "wasm")),
+                contentType = "application/wasm"
+            ];
+
+            If[
+                ((StringLength[route] > 3) && (StringTake[route, -3] == "ico")),
+                contentType = "image/x-icon"
+            ];
+
             (* return response *)
             response = ExportString[
             HTTPResponse[ responseString, <|
                 "StatusCode" -> 200,
                 (* wasm files require specific header *)
-                "ContentType" -> If[
-                    ((StringLength[route] > 4) && (StringTake[route, -4] == "wasm")),
-                    "application/wasm",
-                    "text/html"
-                ],
+                "ContentType" -> contentType,
                 "Headers" -> { "Access-Control-Allow-Origin" -> origin }
             |>], "HTTPResponse"];
 
