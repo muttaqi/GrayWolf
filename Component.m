@@ -12,7 +12,9 @@ Component := Class[
         "style" -> <||>,
         "class" -> {},
         "text" -> "",
-        "children" -> {}
+        "children" -> {},
+        "props" -> <||>,
+        "attributes" -> {}
     |>,
     <|
         (* renders a component into html format *)
@@ -46,6 +48,18 @@ Component := Class[
                     ) &/@ this["class"];
                     
                     out = out <> "\" ";
+                )];
+
+                If[Length[Keys[this["props"]]] > 0, (
+                    (
+                        out = out <> # <> "=\"" <> this["props"][#] <> "\" ";
+                    ) &/@ Keys[this["props"]];
+                )];
+
+                If[Length[this["attributes"]] > 0, (
+                    (
+                        out = out <> # <> " ";
+                    ) &/@ this["attributes"];
                 )];
 
                 (* text content *)
