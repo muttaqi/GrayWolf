@@ -39,7 +39,7 @@ Component := Class[
                 ];
 
                 (* format class list as space-divided output *)
-                If[Not[this["class"] == ""], (
+                If[Length[this["class"]] > 0, (
                     out = out <> "class=\"";
                     (
                         out = out <> # <> " ";

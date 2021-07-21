@@ -7,7 +7,7 @@ On[Assert]
 
 component = New[Component, <|"tag"-> "a", "text" -> "Hello World!"|>]
 
-Assert[component["render", {}] == "<a style=\"\" class=\"\">\nHello World!\n</a>"]
+Assert[component["render", {}] == "<a >\nHello World!\n</a>"]
 
 listComponent = New[Component, <|"tag"-> "ul", "class" -> {"test-class"}, "children" -> {
     New[Component, <|"tag"-> "li", "style" -> <|"margin" -> 2|>|>],
@@ -15,8 +15,10 @@ listComponent = New[Component, <|"tag"-> "ul", "class" -> {"test-class"}, "child
     New[Component, <|"tag"-> "li", "style" -> <|"margin" -> 4|>|>]
 }|>]
 
-Assert[listComponent["render", {}] == "<ul style=\"\" class=\"test-class \">\n\n<li style=\"margin: 2; \" class=\"\">\n\n</li>\n<li style=\"margin: 3; \" class=\"\">\n\n</li>\n<li style=\"margin: 4; \" class=\"\">\n\n</li>\n</ul>"]
+Assert[listComponent["render", {}] == "<ul class=\"test-class \" >\n\n<li style=\"margin: 2; \" >\n\n</li>\n<li style=\"margin: 3; \" >\n\n</li>\n<li style=\"margin: 4; \" >\n\n</li>\n</ul>"]
 
+(* cloud call *)
+(*
 embedComponent = New[Embed, <|"object"->
     CloudDeploy[
         Notebook[
@@ -30,5 +32,7 @@ embedComponent = New[Embed, <|"object"->
     ]|>
 ];
 
-Print[embedComponent["render", {}]];
-Print[BR["render", {}]];
+Assert[StringTake[embedComponent["render", {}], 7] == "<iframe"];
+*)
+
+Assert[BR["render", {}] == "<br>"];
