@@ -49,6 +49,5 @@ See the example folder for an example project structure and code. The default po
 
 ## Future Plans
 
-* Client-side statefulness
 * Routes and URL parameter handling
 * Database model interface
