@@ -1,3 +1,3 @@
-document.getElementById("graywolfefac3b64-e93c-4f06-aff8-8c1a9224495b").addEventListener('input', (event) => {
-document.getElementById("graywolf8eed69a5-7575-4d2c-bfe8-1a83281b2e85").textContent = event.target.value;
+document.getElementById("graywolf20c2ca4b-8743-42d3-985a-22dd6374fc79").addEventListener('input', (event) => {
+document.getElementById("graywolf6feea07b-2038-4f90-91d9-d7e240b20ff4").textContent = event.target.value;
 });

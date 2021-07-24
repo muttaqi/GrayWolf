@@ -78,15 +78,6 @@ GenerateState[stateRelationships_] := (
     Close[stateFile];
 )
 
-(* model for return object from render function *)
-RenderResponse = Class[
-    <|
-        "html" -> "",
-        "stateRelationships" -> <||>
-    |>,
-    <||>
-];
-
 (* update or insert a relationship to a state relationship association *)
 upsertRelationship[boundVarId_, boundComponent_, stateRelationships_] := (
     If[
@@ -215,7 +206,7 @@ Component := Class[
                 (* close tag and return *)
                 out = out <> "</" <> this["tag"] <> ">";
 
-                New[RenderResponse, <|"html"->out, "stateRelationships"->stateRelationships|>]
+                <|"html"->out, "stateRelationships"->stateRelationships|>
             )
         ]
     |>
@@ -236,7 +227,7 @@ Img := Extend[Component,
                 (* call component render *)
                 superRender = this["_super"]["render", {<||>}];
                 (* insert base64 data *)
-                New[RenderResponse, <|"html"->StringInsert[superRender["html"], " src=\""<>srcString<>"\"", 5], "stateRelationships"->sr|>]
+                <|"html"->StringInsert[superRender["html"], " src=\""<>srcString<>"\"", 5], "stateRelationships"->sr|>
             )
         ]
     |>
@@ -254,7 +245,7 @@ Script := Extend[Component,
             (
                 (* render as a component and insert src file attribute *)
                 superRender = this["_super"]["render", {<||>}];
-                New[RenderResponse, <|"html"-> StringInsert[superRender["html"], " src=\""<>this["src"]<>"\"", 8], "stateRelationships"->sr|>]
+                <|"html"-> StringInsert[superRender["html"], " src=\""<>this["src"]<>"\"", 8], "stateRelationships"->sr|>
             )
         ]
     |>
@@ -269,7 +260,7 @@ Embed := Extend[Component,
         "render"->Function[
             {sr, this},
             (
-                New[RenderResponse, <|"html"-> EmbedCode[this["object"]]["CodeSection"]["Content"], "stateRelationships"->sr|>]
+                <|"html"-> EmbedCode[this["object"]]["CodeSection"]["Content"], "stateRelationships"->sr|>
             )
         ]
     |>
@@ -283,7 +274,7 @@ BRType := Extend[Component,
         "render"->Function[
             {stateRelationships, this},
             (
-                New[RenderResponse, <|"html" -> "<br>", "stateRelationships" -> stateRelationships|>]
+                <|"html" -> "<br>", "stateRelationships" -> stateRelationships|>
             )
         ]
     |>
