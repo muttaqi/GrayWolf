@@ -63,3 +63,12 @@ Serve[root_] := (
     
     While[True]
 );
+
+(* if Server.m is run via the CLI it will serve a specified folder *)
+If[
+    And[
+        Length[$ScriptCommandLine] == 2,
+        ToLowerCase[StringTake[ToString[Part[$ScriptCommandLine,1]], -8]] == "server.m"
+    ],
+    Serve[PathJoin[ToString @ Part[$ScriptCommandLine,2]]]
+];

@@ -10,13 +10,17 @@ increment[i_] := i + 2;
 (* text component *)
 component = New[Component, <|"tag"-> "a", "text" -> "Hello World!"|>];
 
-(* nested list component *)
 i = 1
+
+(* bound stateful variable *)
+text = Bind["default"];
+
+(* nested list component, with a bound text variable *)
 listComponent = New[Component, <|"tag"-> "ul", "class" -> {"test-class"}, "children" -> {
     New[Component, <|"tag"-> "li", "style" -> <|"margin" -> 2|>, "text" -> (i = i + 1; ToString[i])|>],
     New[Component, <|"tag"-> "li", "style" -> <|"margin" -> 3|>, "text" -> (i = i + 1; ToString[i])|>],
-    New[Component, <|"tag"-> "li", "style" -> <|"margin" -> 4|>, "text" -> (i = i + 1; ToString[i])|>],
-    New[Component, <|"tag"-> "input", "props"-> <|"value"->"default"|>|>]
+    New[Component, <|"tag"-> "li", "style" -> <|"margin" -> 4|>, "text" -> text|>],
+    New[Component, <|"tag"-> "input", "props"-> <|"value" -> text|>|>]
 }|>];
 
 (* img component from Mathematica graphics *)

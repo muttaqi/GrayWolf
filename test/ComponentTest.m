@@ -7,7 +7,7 @@ On[Assert]
 
 component = New[Component, <|"tag"-> "a", "text" -> "Hello World!"|>]
 
-Assert[component["render", {}] == "<a >\nHello World!\n</a>"]
+Assert[component["render", {<||>}]["html"] == "<a >\nHello World!\n</a>"]
 
 listComponent = New[Component, <|"tag"-> "ul", "class" -> {"test-class"}, "children" -> {
     New[Component, <|"tag"-> "li", "style" -> <|"margin" -> 2|>|>],
@@ -15,7 +15,7 @@ listComponent = New[Component, <|"tag"-> "ul", "class" -> {"test-class"}, "child
     New[Component, <|"tag"-> "li", "style" -> <|"margin" -> 4|>|>]
 }|>]
 
-Assert[listComponent["render", {}] == "<ul class=\"test-class \" >\n\n<li style=\"margin: 2; \" >\n\n</li>\n<li style=\"margin: 3; \" >\n\n</li>\n<li style=\"margin: 4; \" >\n\n</li>\n</ul>"]
+Assert[listComponent["render", {<||>}]["html"] == "<ul class=\"test-class \" >\n\n<li style=\"margin: 2; \" >\n\n</li>\n<li style=\"margin: 3; \" >\n\n</li>\n<li style=\"margin: 4; \" >\n\n</li>\n</ul>"]
 
 (* cloud call *)
 (*
@@ -32,7 +32,30 @@ embedComponent = New[Embed, <|"object"->
     ]|>
 ];
 
-Assert[StringTake[embedComponent["render", {}], 7] == "<iframe"];
+Assert[StringTake[embedComponent["render", {<||>}], 7]["html"] == "<iframe"];
 *)
 
-Assert[BR["render", {}] == "<br>"];
+Assert[BR["render", {<||>}]["html"] == "<br>"];
+
+bound = Bind["test"];
+boundComponent = New[Component, <|"tag"-> "a", "text" -> bound|>];
+
+result = boundComponent["render", {<||>}];
+
+Assert[StringContainsQ[result["html"], "<a"]]
+Assert[StringContainsQ[result["html"], "\ntest\n"]]
+Assert[StringContainsQ[result["html"], "</a>"]]
+
+GenerateState[result["stateRelationships"]];
+
+boundComponent = New[Component, <|"tag"-> "ul", "class" -> {"test-class"}, "children" -> {
+    New[Component, <|"tag"-> "li", "style" -> <|"margin" -> 2|>, "text" -> bound|>],
+    New[Component, <|"tag"-> "li", "style" -> <|"margin" -> 3|>, "text" -> bound|>],
+    New[Component, <|"tag"-> "li", "style" -> <|"margin" -> 4|>, "text" -> bound|>],
+    New[Component, <|"tag"-> "input", "props"-> <|"value" -> bound|>|>]
+}|>];
+
+result = boundComponent["render", {<||>}];
+
+GenerateState[result["stateRelationships"]];
+Assert[Keys[result["stateRelationships"]] > 0];

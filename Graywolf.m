@@ -10,16 +10,29 @@ Import[GWDir <> "/WolfrASM.m"]
 
 (* see github.com/muttaqi/woops for documentation on object oriented syntax used *)
 
-(* -------------- the code below is handled by the compile and serve process ------------ *)
+(* -------------- the code below is executed by the compile and serve process ------------ *)
 
 (* run render function for every component in a given list and output result *)
 RenderList[components_List] := (
-    out := "";
+    gw`out := "";
+    gw`stateRelationships = <||>;
     
     (
-        out = out <> "\n" <> #["render", {}];
+        result = #["render", {gw`stateRelationships}];
+        gw`out = gw`out <> "\n" <> result["html"];
+        gw`stateRelationships = result["stateRelationships"];
     )&/@components;
-    out
+
+    (* if some state relationship, generate __state__.js and add it to html *)
+    If[
+        Length[Keys[gw`stateRelationships]] > 0,
+        (
+            GenerateState[gw`stateRelationships];
+            result = New[Script, <|"src"->"js/__state__.js"|>]["render", {<||>}];
+            gw`out = gw`out <> "\n" <> result["html"];
+        )
+    ];
+    gw`out
 );
 
 (* render a list of components and inject them into an index.html file *)
@@ -95,7 +108,7 @@ Graywolf[components_List] := (
 (* compiling a single component is equivalent to compiling a list of components with one item *)
 Graywolf[component_] := Graywolf[{component}];
 
-(* ------------ code below is run by controller process ---------------*)
+(* ------------ code below is executed by controller process ---------------*)
 
 (* run the compile and serve process separately *)
 CompileAndServe[main_] := (
@@ -143,7 +156,7 @@ Controller[main_] := (
 If[
     And[
         Length[$ScriptCommandLine] == 2,
-        StringTake[ToString[Part[$ScriptCommandLine,1]], -10] == "Graywolf.m"
+        ToLowerCase[StringTake[ToString[Part[$ScriptCommandLine,1]], -10]] == "graywolf.m"
     ],
     Controller[PathJoin[ToString @ Part[$ScriptCommandLine,2], "Main.m"]]
 ];
